@@ -20,8 +20,8 @@ export default function HomePage() {
             Lưu ý khi nhập dữ liệu
           </p>
           <p className="mt-1 text-sm leading-6 text-amber-800">
-            Những ô nào bạn không có thông tin thì có thể để trống. Hệ thống sẽ chỉ
-            tính các phương thức và tổ hợp đủ điều kiện theo dữ liệu bạn đã nhập.
+            Những không có thông tin thì có thể để trống. Hệ thống sẽ chỉ
+            tính các phương thức và tổ hợp đủ điều kiện theo dữ liệu đã nhập.
           </p>
         </div>
       </section>
