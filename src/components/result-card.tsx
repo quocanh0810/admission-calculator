@@ -1,6 +1,26 @@
 import { CalculationResponse, MethodResult } from "@/types/admission"
 import MethodTable from "./method-table"
 
+const SUBJECT_LABELS: Record<string, string> = {
+    toan: "Toán",
+    van: "Văn",
+    anh: "Anh",
+    ly: "Lý",
+    hoa: "Hóa",
+    su: "Sử",
+    dia: "Địa",
+    gdktpl: "GDKT&PL",
+    tinhoc: "Tin học",
+    congnghecongnghiep: "Công nghệ công nghiệp",
+    congnghenongnghiep: "Công nghệ nông nghiệp",
+    tiengphap: "Tiếng Pháp",
+    tiengtrung: "Tiếng Trung",
+  }
+
+  function formatSubjectsVietnamese(subjects: string[]) {
+    return subjects.map((subject) => SUBJECT_LABELS[subject] ?? subject).join(" + ")
+  }
+
 function BestMethodBanner({ method }: { method: MethodResult | null }) {
   if (!method) {
     return (
@@ -84,7 +104,7 @@ function BestMethodBanner({ method }: { method: MethodResult | null }) {
                 {method.bestCombination.combination}
               </p>
               <p className="mt-1 text-sm text-emerald-800">
-                {method.bestCombination.subjects.join(" + ")}
+                {formatSubjectsVietnamese(method.bestCombination.subjects)}
               </p>
             </div>
           ) : null}
@@ -199,7 +219,7 @@ function MethodSummaryCard({
                 {method.bestCombination.combination}
               </p>
               <p className="mt-1 text-sm text-emerald-800">
-                {method.bestCombination.subjects.join(" + ")}
+                {formatSubjectsVietnamese(method.bestCombination.subjects)}
               </p>
             </div>
           ) : null}
@@ -302,69 +322,67 @@ function Method402Card({ method }: { method: MethodResult | null }) {
                     </div>
   
                     <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                      <div className="rounded-xl bg-white px-4 py-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                          Điểm gốc bài thi
-                        </p>
-                        <p className="mt-1 text-lg font-bold text-slate-900">
-                          {branch.rawBase}
-                        </p>
-                      </div>
-  
-                      <div className="rounded-xl bg-white px-4 py-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                          Điểm ưu tiên gốc
-                        </p>
-                        <p className="mt-1 text-lg font-bold text-slate-900">
-                          {branch.priorityBase}
-                        </p>
-                      </div>
-  
-                      <div className="rounded-xl bg-white px-4 py-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                          Ưu tiên sau giảm
-                        </p>
-                        <p className="mt-1 text-lg font-bold text-slate-900">
-                          {branch.priorityAdjusted}
-                        </p>
-                      </div>
-  
-                      <div className="rounded-xl bg-white px-4 py-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                          Điểm xét thưởng
-                        </p>
-                        <p className="mt-1 text-lg font-bold text-slate-900">
-                          {branch.awardScore}
-                        </p>
-                      </div>
-  
-                      <div className="rounded-xl bg-white px-4 py-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                          Điểm khuyến khích
-                        </p>
-                        <p className="mt-1 text-lg font-bold text-slate-900">
-                          {branch.encouragementScore}
-                        </p>
-                      </div>
-  
-                      <div className="rounded-xl bg-white px-4 py-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                          Tổng điểm cộng thang 30
-                        </p>
-                        <p className="mt-1 text-lg font-bold text-slate-900">
-                          {branch.totalBonus30}
-                        </p>
-                      </div>
-  
-                      <div className="rounded-xl bg-white px-4 py-3 md:col-span-2 xl:col-span-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                          Điểm cộng quy đổi sang thang {branch.maxScale}
-                        </p>
-                        <p className="mt-1 text-lg font-bold text-slate-900">
-                          {branch.totalBonusScaled}
-                        </p>
-                      </div>
-                    </div>
+                        <div className="rounded-xl bg-white px-4 py-4 min-h-[132px]">
+                            <div className="h-[44px]">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                Điểm gốc bài thi
+                            </p>
+                            </div>
+                            <p className="mt-3 text-lg font-bold text-slate-900">{branch.rawBase}</p>
+                        </div>
+
+                        <div className="rounded-xl bg-white px-4 py-4 min-h-[132px]">
+                            <div className="h-[44px]">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                Ưu tiên sau giảm
+                            </p>
+                            </div>
+                            <p className="mt-3 text-lg font-bold text-slate-900">
+                            {Number(branch.priorityAdjusted.toFixed(9))}
+                            </p>
+                        </div>
+
+                        <div className="rounded-xl bg-white px-4 py-4 min-h-[132px]">
+                            <div className="h-[44px]">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                Điểm ưu tiên
+                            </p>
+                            <p className="text-xs text-slate-500">thang {branch.maxScale}</p>
+                            </div>
+                            <p className="mt-3 text-lg font-bold text-slate-900">
+                            {Number(branch.priorityAdjustedScaled.toFixed(9))}
+                            </p>
+                        </div>
+
+                        <div className="rounded-xl bg-white px-4 py-4 min-h-[132px]">
+                            <div className="h-[44px]">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                Điểm xét thưởng
+                            </p>
+                            </div>
+                            <p className="mt-3 text-lg font-bold text-slate-900">{branch.awardScore}</p>
+                        </div>
+
+                        <div className="rounded-xl bg-white px-4 py-4 min-h-[132px]">
+                            <div className="h-[44px]">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                Điểm khuyến khích
+                            </p>
+                            </div>
+                            <p className="mt-3 text-lg font-bold text-slate-900">
+                            {branch.encouragementScore}
+                            </p>
+                        </div>
+
+                        <div className="rounded-xl bg-white px-4 py-4 min-h-[132px]">
+                            <div className="h-[44px]">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                Tổng điểm cộng thang 30
+                            </p>
+                            </div>
+                            <p className="mt-3 text-lg font-bold text-slate-900">{branch.totalBonus30}</p>
+                        </div>
+                        </div>
   
                     <div className="mt-3 rounded-xl bg-white px-4 py-3 text-sm text-slate-600">
                       Công thức hiển thị: {branch.rawBase} + {branch.totalBonusScaled} ={" "}
@@ -451,7 +469,7 @@ export default function ResultCard({
         <MethodSummaryCard
           title="Phương thức 410"
           method={result.method410}
-          scoreLabel="Điểm 410"
+          scoreLabel="ĐIỂM XÉT TUYỂN"
         />
 
         <Method402Card method={result.method402} />

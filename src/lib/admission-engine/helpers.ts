@@ -20,6 +20,7 @@ export function calculateAdjustedPriority(
   basePriority: number,
   totalScoreBeforePriority: number,
   maxScale: number,
+  shouldRound = true,
 ): number {
   if (basePriority <= 0) return 0
 
@@ -27,19 +28,19 @@ export function calculateAdjustedPriority(
   const denominator = maxScale * 0.25
 
   if (totalScoreBeforePriority <= threshold) {
-    return round2(basePriority)
+    return shouldRound ? round2(basePriority) : basePriority
   }
 
   if (totalScoreBeforePriority >= maxScale) {
     return 0
   }
 
-  return round2(
-    Math.max(
-      0,
-      ((maxScale - totalScoreBeforePriority) / denominator) * basePriority,
-    ),
+  const rawValue = Math.max(
+    0,
+    ((maxScale - totalScoreBeforePriority) / denominator) * basePriority,
   )
+
+  return shouldRound ? round2(rawValue) : rawValue
 }
 
 /**
@@ -54,6 +55,7 @@ export function calculateTotalBonus30(params: {
   maxScaleForPriorityRule: number
   awardScore: number
   encouragementScore: number
+  roundPriorityAdjusted?: boolean
 }) {
   const {
     priorityBase,
@@ -61,12 +63,14 @@ export function calculateTotalBonus30(params: {
     maxScaleForPriorityRule,
     awardScore,
     encouragementScore,
+    roundPriorityAdjusted = true,
   } = params
 
   const priorityAdjusted = calculateAdjustedPriority(
     priorityBase,
     totalScoreBeforePriority,
     maxScaleForPriorityRule,
+    roundPriorityAdjusted,
   )
 
   const safeAward = Math.min(awardScore, 1.5)
@@ -78,7 +82,7 @@ export function calculateTotalBonus30(params: {
   )
 
   return {
-    priorityAdjusted: round2(priorityAdjusted),
+    priorityAdjusted,
     awardScore: round2(safeAward),
     encouragementScore: round2(safeEncouragement),
     totalBonus30: round2(totalBonus30),

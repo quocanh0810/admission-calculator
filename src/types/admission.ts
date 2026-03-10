@@ -130,6 +130,8 @@ export interface Method402BranchResult {
   rawBase: number
   priorityBase: number
   priorityAdjusted: number
+  priorityAdjustedScaled: number
+
   awardScore: number
   encouragementScore: number
   totalBonus30: number

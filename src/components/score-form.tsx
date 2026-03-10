@@ -109,7 +109,7 @@ const initialPayload: any = {
   act: undefined,
 
   certificates: {
-    ielts: 6.5,
+    ielts: undefined,
     toeflIbt: undefined,
     vstep: undefined,
     aptis: undefined,
@@ -618,21 +618,6 @@ export default function ScoreForm() {
       </div>
     </div>
   </div>
-
-  <label className="mt-5 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-    <input
-      type="checkbox"
-      checked={payload.isSpecializedSchool}
-      onChange={(e) =>
-        setPayload((prev: any) => ({
-          ...prev,
-          isSpecializedSchool: e.target.checked,
-        }))
-      }
-      className="h-4 w-4 rounded border-slate-300"
-    />
-    Học trường THPT chuyên / trọng điểm quốc gia
-  </label>
 </SectionCard>
 
         <SectionCard
@@ -674,6 +659,26 @@ export default function ScoreForm() {
               Thí sinh không có giải thì không chọn mục này.
             </div>
           )}
+        </SectionCard>
+
+        <SectionCard
+            title="5. Thông tin trường THPT"
+            description="Nếu không học trường THPT chuyên / trọng điểm quốc gia vui lòng không chọn mục này"
+            >
+            <label className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                <input
+                type="checkbox"
+                checked={payload.isSpecializedSchool}
+                onChange={(e) =>
+                    setPayload((prev: any) => ({
+                    ...prev,
+                    isSpecializedSchool: e.target.checked,
+                    }))
+                }
+                className="h-4 w-4 rounded border-slate-300"
+                />
+                Tôi học trường THPT chuyên / trọng điểm quốc gia
+            </label>
         </SectionCard>
 
         <div className="flex flex-col gap-3 sm:flex-row">

@@ -55,21 +55,28 @@ export function calculateMethod402(input: CandidateInput): MethodResult {
       maxScaleForPriorityRule: candidate.maxScale,
       awardScore: award,
       encouragementScore: encouragement,
+      roundPriorityAdjusted: false,
     })
-
+  
+    const priorityAdjustedScaled =
+      (bonus30.priorityAdjusted * candidate.maxScale) / 30
+  
     const totalBonusScaled = scaleBonus30ToScaleN(
       bonus30.totalBonus30,
       candidate.maxScale,
     )
-
-    const finalScore = round2(candidate.rawBase + totalBonusScaled)
-
+  
+    const finalScore = round2(
+      Math.min(candidate.maxScale, candidate.rawBase + totalBonusScaled),
+    )
+  
     return {
       branch: candidate.branch,
       maxScale: candidate.maxScale,
-      rawBase: candidate.rawBase,
+      rawBase: round2(candidate.rawBase),
       priorityBase: input.priorityScore,
       priorityAdjusted: bonus30.priorityAdjusted,
+      priorityAdjustedScaled,
       awardScore: bonus30.awardScore,
       encouragementScore: bonus30.encouragementScore,
       totalBonus30: bonus30.totalBonus30,
