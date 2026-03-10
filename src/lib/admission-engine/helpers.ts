@@ -7,7 +7,7 @@ import {
 import { combinations } from "@/data/combinations"
 
 export function round2(value: number): number {
-  return Math.round(value * 100) / 100
+  return Math.round((value + Number.EPSILON) * 100) / 100
 }
 
 /**
