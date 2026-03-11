@@ -126,7 +126,7 @@ const SUBJECT_LABELS: Record<string, string> = {
               <div key={track.track} className="rounded-xl bg-white/70 px-4 py-3">
                 <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">
                   {track.track === "standard"
-                    ? "Tổng điểm đạt được tối đa 30 điểm - Chương trình chuẩn"
+                    ? "Tổng điểm đạt được tối đa 30 điểm - Tất cả các chương trình đào tạo"
                     : "Tổng điểm đạt được tối đa 30 điểm - IPOP / Song bằng / Tiên tiến"}
                 </p>
   
