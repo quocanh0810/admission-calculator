@@ -15,6 +15,25 @@ export const combinations: Record<CombinationCode, Subject[]> = {
   X28: ["toan", "congnghenongnghiep", "anh"],
 }
 
+export const STANDARD_PROGRAM_COMBINATIONS: CombinationCode[] = [
+  "A00",
+  "A01",
+  "D01",
+  "D07",
+]
+
+export const SPECIAL_PROGRAM_COMBINATIONS: CombinationCode[] = [
+  "A01",
+  "D01",
+  "D07",
+  "D09",
+  "D10",
+  "X25",
+  "X26",
+  "X27",
+  "X28",
+]
+
 export const combinationLabels: Record<CombinationCode, string> = {
   A00: "Toán, Vật lí, Hóa học",
   A01: "Toán, Vật lí, Tiếng Anh",

@@ -1,8 +1,9 @@
-import { majors } from "@/data/majors"
+import { SCORE_BUCKETS } from "../../data/scoreBuckets"
 import {
   CalculationResponse,
   CandidateInput,
   MethodResult,
+  ScoreBucketResult,
 } from "@/types/admission"
 import { calculateMethod100 } from "./calculateMethod100"
 import { calculateMethod402 } from "./calculateMethod402"
@@ -20,35 +21,39 @@ function recommendComparableMethod(
 
   if (!eligible.length) return null
 
-  return eligible.sort(
-    (a, b) => (b.scoreDisplay ?? 0) - (a.scoreDisplay ?? 0),
-  )[0]
+  return eligible.sort((a, b) => (b.scoreDisplay ?? 0) - (a.scoreDisplay ?? 0))[0]
 }
 
 export function calculateAllMethods(
   input: CandidateInput,
 ): CalculationResponse {
-  const method100 = calculateMethod100(
-    input,
-    majors.filter((major) => major.allowedMethods.includes("100")),
-  )
-
-  const method409 = calculateMethod409(
-    input,
-    majors.filter((major) => major.allowedMethods.includes("409")),
-  )
-
-  const method500 = calculateMethod500(
-    input,
-    majors.filter((major) => major.allowedMethods.includes("500")),
-  )
-
-  const method410 = calculateMethod410(
-    input,
-    majors.filter((major) => major.allowedMethods.includes("410")),
-  )
-
+  const standard100 = calculateMethod100(input)
+  const standard409 = calculateMethod409(input)
   const method402 = calculateMethod402(input)
+  const method410 = calculateMethod410(input, [])
+  const method500 = calculateMethod500(input)
+
+  const comparableMethods: MethodResult[] = [standard100, standard409, method500]
+  const bestComparableMethod = recommendComparableMethod(comparableMethods)
+
+  const scoreBuckets: ScoreBucketResult[] = [
+    {
+      key: SCORE_BUCKETS.standard.key,
+      title: SCORE_BUCKETS.standard.title,
+      combinations: SCORE_BUCKETS.standard.combinations,
+      comparableMethods,
+      bestComparableMethod,
+      method410,
+    },
+    {
+      key: SCORE_BUCKETS.special.key,
+      title: SCORE_BUCKETS.special.title,
+      combinations: SCORE_BUCKETS.special.combinations,
+      comparableMethods,
+      bestComparableMethod,
+      method410,
+    },
+  ]
 
   const manual301: MethodResult = {
     method: "301",
@@ -59,22 +64,17 @@ export function calculateAllMethods(
     note: "PTXT 301 là diện xét hồ sơ/minh chứng, không tự chấm điểm tự động.",
   }
 
-  const comparableMethods: MethodResult[] = [method100, method409, method500]
-  const bestComparableMethod = recommendComparableMethod(comparableMethods)
-
   const allMethods: MethodResult[] = [
     ...comparableMethods,
-    method410,
     method402,
+    method410,
     manual301,
   ]
 
   const eligibleMajorResults = buildMajorEvaluations(allMethods)
 
   return {
-    comparableMethods,
-    bestComparableMethod,
-    method410,
+    scoreBuckets,
     method402,
     manual301,
     eligibleMajorResults,

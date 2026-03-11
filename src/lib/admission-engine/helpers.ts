@@ -6,6 +6,34 @@ import {
 } from "@/types/admission"
 import { combinations } from "@/data/combinations"
 
+export function getBestCombinationExamScoreByGroup(
+  input: CandidateInput,
+  allowedCombinationCodes: CombinationCode[],
+  extra: number,
+): CombinationScoreResult | null {
+  let best: CombinationScoreResult | null = null
+
+  for (const code of allowedCombinationCodes) {
+    const subjects = combinations[code]
+    const scores = subjects.map((s) => input.examScores[s])
+
+    if (scores.some((s) => typeof s !== "number")) continue
+
+    const score = round2(
+      (scores[0] as number) +
+        (scores[1] as number) +
+        (scores[2] as number) +
+        extra,
+    )
+
+    if (!best || score > best.score) {
+      best = { combination: code, subjects, score }
+    }
+  }
+
+  return best
+}
+
 export function round2(value: number): number {
   return Math.round((value + Number.EPSILON) * 100) / 100
 }

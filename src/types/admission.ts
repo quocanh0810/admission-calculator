@@ -140,6 +140,21 @@ export interface Method402BranchResult {
   finalScore: number
 }
 
+export interface ProgramTrackScore {
+  track: "standard" | "special"
+  trackLabel: string
+
+  scoreDisplay: number | null
+  baseScoreBeforeBonus?: number | null
+  bestCombination?: CombinationScoreResult
+
+  priorityBase?: number
+  priorityAdjusted?: number
+  awardScore?: number
+  encouragementScore?: number
+  totalBonus30?: number
+}
+
 export interface MethodResult {
   method: MethodCode
   eligible: boolean
@@ -158,6 +173,8 @@ export interface MethodResult {
 
   branches402?: Method402BranchResult[]
   bestBranch402?: "HSA" | "TSA" | "SAT" | "ACT"
+
+  programTrackScores?: ProgramTrackScore[]
 }
 
 export interface MajorMethodEvaluation {
@@ -169,16 +186,20 @@ export interface MajorMethodEvaluation {
   marginVsBenchmark?: number | null
 }
 
-export interface CalculationResponse {
+export interface ScoreBucketResult {
+  key: "standard" | "special"
+  title: string
+  combinations: CombinationCode[]
   comparableMethods: MethodResult[]
   bestComparableMethod: MethodResult | null
-
   method410: MethodResult | null
+}
+
+export interface CalculationResponse {
+  scoreBuckets: ScoreBucketResult[]
   method402: MethodResult | null
   manual301: MethodResult | null
-
   eligibleMajorResults: MajorMethodEvaluation[]
-
   summary: {
     totalEligibleMethods: number
     recommendedMethod: MethodCode | null

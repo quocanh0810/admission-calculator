@@ -21,107 +21,136 @@ const SUBJECT_LABELS: Record<string, string> = {
     return subjects.map((subject) => SUBJECT_LABELS[subject] ?? subject).join(" + ")
   }
 
-function BestMethodBanner({ method }: { method: MethodResult | null }) {
-  if (!method) {
+  function BestMethodBanner({ method }: { method: MethodResult | null }) {
+    if (!method) {
+      return (
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+          <p className="text-sm text-slate-600">
+            Chưa xác định được phương thức tối ưu trong nhóm so sánh 100, 409, 500.
+          </p>
+        </div>
+      )
+    }
+  
     return (
-      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-        <p className="text-sm text-slate-600">
-          Chưa xác định được phương thức tối ưu trong nhóm so sánh 100, 409, 500.
+      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+          Phương thức có lợi nhất trong nhóm so sánh
         </p>
+  
+        <div className="mt-3 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div className="flex-1">
+            <p className="text-3xl font-bold text-emerald-900">{method.method}</p>
+            <p className="mt-1 text-sm leading-6 text-emerald-800">
+              {method.note ??
+                "Đây là phương thức đang có lợi nhất trong nhóm 100, 409, 500."}
+            </p>
+  
+            {/* <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="rounded-xl bg-white/70 px-4 py-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">
+                  Điểm ưu tiên gốc
+                </p>
+                <p className="mt-1 text-xl font-bold text-emerald-900">
+                  {method.priorityBase ?? 0}
+                </p>
+              </div>
+  
+              <div className="rounded-xl bg-white/70 px-4 py-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">
+                  Ưu tiên sau giảm
+                </p>
+                <p className="mt-1 text-xl font-bold text-emerald-900">
+                  {method.priorityAdjusted ?? 0}
+                </p>
+              </div>
+  
+              <div className="rounded-xl bg-white/70 px-4 py-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">
+                  Điểm khuyến khích
+                </p>
+                <p className="mt-1 text-base font-semibold text-emerald-900">
+                  {method.encouragementScore ?? 0}
+                </p>
+              </div>
+            </div> */}
+  
+            {/* <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl bg-white/70 px-4 py-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">
+                  Điểm xét thưởng
+                </p>
+                <p className="mt-1 text-base font-semibold text-emerald-900">
+                  {method.awardScore ?? 0}
+                </p>
+              </div>
+  
+              <div className="rounded-xl bg-white/70 px-4 py-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">
+                  Điểm cộng
+                </p>
+                <p className="mt-1 text-xl font-bold text-emerald-900">
+                  {method.totalBonus30 ?? 0}
+                </p>
+              </div>
+            </div> */}
+  
+            {/* {method.bestCombination ? (
+              <div className="mt-4 rounded-xl bg-white/70 px-4 py-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">
+                  Tổ hợp tốt nhất
+                </p>
+                <p className="mt-1 text-base font-bold text-emerald-900">
+                  {method.bestCombination.combination}
+                </p>
+                <p className="mt-1 text-sm text-emerald-800">
+                  {formatSubjectsVietnamese(method.bestCombination.subjects)}
+                </p>
+              </div>
+            ) : null} */}
+          </div>
+  
+          {/* <div className="rounded-xl bg-white/70 px-5 py-4 xl:min-w-[180px]">
+            <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">
+              Điểm xét tuyển
+            </p>
+            <p className="mt-2 text-3xl font-bold text-emerald-900">
+              {method.scoreDisplay ?? "-"}
+            </p>
+          </div> */}
+        </div>
+  
+        {method.programTrackScores?.length ? (
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {method.programTrackScores.map((track) => (
+              <div key={track.track} className="rounded-xl bg-white/70 px-4 py-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">
+                  {track.track === "standard"
+                    ? "Tổng điểm đạt được tối đa 30 điểm - Chương trình chuẩn"
+                    : "Tổng điểm đạt được tối đa 30 điểm - IPOP / Song bằng / Tiên tiến"}
+                </p>
+  
+                <p className="mt-2 text-2xl font-bold text-emerald-900">
+                  {track.scoreDisplay ?? "-"}
+                </p>
+  
+                {track.bestCombination ? (
+                  <>
+                    <p className="mt-2 text-sm font-semibold text-emerald-900">
+                      {track.bestCombination.combination}
+                    </p>
+                    <p className="mt-1 text-sm text-emerald-800">
+                      {formatSubjectsVietnamese(track.bestCombination.subjects)}
+                    </p>
+                  </>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        ) : null}
       </div>
     )
   }
-
-  return (
-    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
-      <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-        Phương thức có lợi nhất trong nhóm so sánh
-      </p>
-
-      <div className="mt-3 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-        <div className="flex-1">
-          <p className="text-3xl font-bold text-emerald-900">{method.method}</p>
-          <p className="mt-1 text-sm leading-6 text-emerald-800">
-            {method.note ??
-              "Đây là phương thức đang có lợi nhất trong nhóm 100, 409, 500."}
-          </p>
-
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            <div className="rounded-xl bg-white/70 px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">
-                Điểm ưu tiên gốc
-              </p>
-              <p className="mt-1 text-xl font-bold text-emerald-900">
-                {method.priorityBase ?? 0}
-              </p>
-            </div>
-
-            <div className="rounded-xl bg-white/70 px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">
-                Ưu tiên sau giảm
-              </p>
-              <p className="mt-1 text-xl font-bold text-emerald-900">
-                {method.priorityAdjusted ?? 0}
-              </p>
-            </div>
-
-            <div className="rounded-xl bg-white/70 px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">
-                Điểm cộng cuối cùng
-              </p>
-              <p className="mt-1 text-xl font-bold text-emerald-900">
-                {method.totalBonus30 ?? 0}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-xl bg-white/70 px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">
-                Điểm xét thưởng
-              </p>
-              <p className="mt-1 text-base font-semibold text-emerald-900">
-                {method.awardScore ?? 0}
-              </p>
-            </div>
-
-            <div className="rounded-xl bg-white/70 px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">
-                Điểm khuyến khích
-              </p>
-              <p className="mt-1 text-base font-semibold text-emerald-900">
-                {method.encouragementScore ?? 0}
-              </p>
-            </div>
-          </div>
-
-          {method.bestCombination ? (
-            <div className="mt-4 rounded-xl bg-white/70 px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">
-                Tổ hợp tốt nhất
-              </p>
-              <p className="mt-1 text-base font-bold text-emerald-900">
-                {method.bestCombination.combination}
-              </p>
-              <p className="mt-1 text-sm text-emerald-800">
-                {formatSubjectsVietnamese(method.bestCombination.subjects)}
-              </p>
-            </div>
-          ) : null}
-        </div>
-
-        <div className="rounded-xl bg-white/70 px-5 py-4 xl:min-w-[180px]">
-          <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">
-            Điểm xét tuyển
-          </p>
-          <p className="mt-2 text-3xl font-bold text-emerald-900">
-            {method.scoreDisplay ?? "-"}
-          </p>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 function MethodSummaryCard({
   title,
@@ -162,6 +191,28 @@ function MethodSummaryCard({
               </p>
             </div>
           </div>
+
+          {method.programTrackScores?.length ? (
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+                {method.programTrackScores.map((track) => (
+                <div key={track.track} className="rounded-xl bg-white/70 px-4 py-3">
+                    <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">
+                    {track.track === "standard"
+                        ? "Tổng điểm đạt được_tối đa 30 điểm - Chương trình chuẩn"
+                        : "Tổng điểm đạt được_tối đa 30 điểm - IPOP / Song bằng / Tiên tiến"}
+                    </p>
+                    <p className="mt-2 text-2xl font-bold text-emerald-900">
+                    {track.scoreDisplay ?? "-"}
+                    </p>
+                    {track.bestCombination ? (
+                    <p className="mt-1 text-sm text-emerald-800">
+                        {track.bestCombination.combination}
+                    </p>
+                    ) : null}
+                </div>
+                ))}
+            </div>
+            ) : null}
 
           <div className="grid gap-3 md:grid-cols-2">
             <div className="rounded-xl border border-slate-200 p-4">
@@ -385,7 +436,7 @@ function Method402Card({ method }: { method: MethodResult | null }) {
                         </div>
   
                     <div className="mt-3 rounded-xl bg-white px-4 py-3 text-sm text-slate-600">
-                      Công thức hiển thị: {branch.rawBase} + {branch.totalBonusScaled} ={" "}
+                      Công thức tính: {branch.rawBase} + {branch.totalBonusScaled} ={" "}
                       <span className="font-semibold text-slate-900">
                         {branch.finalScore}
                       </span>
@@ -418,75 +469,64 @@ function Method402Card({ method }: { method: MethodResult | null }) {
     )
   }
 
-export default function ResultCard({
-  result,
-}: {
-  result: CalculationResponse
-}) {
-  return (
-    <div className="space-y-6">
-      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
-        <div className="mb-5">
-          <h2 className="text-xl font-semibold text-slate-900">Kết quả phân tích</h2>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Số phương thức đủ điều kiện
-            </p>
-            <p className="mt-2 text-3xl font-bold text-slate-900">
-              {result.summary.totalEligibleMethods}
-            </p>
+  export default function ResultCard({
+    result,
+  }: {
+    result: CalculationResponse
+  }) {
+    const primaryBucket = result.scoreBuckets?.[0]
+  
+    return (
+      <div className="space-y-6">
+        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+          <div className="mb-5">
+            <h2 className="text-xl font-semibold text-slate-900">Kết quả phân tích</h2>
           </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Phương thức đề xuất
-            </p>
-            <p className="mt-2 text-3xl font-bold text-slate-900">
-              {result.summary.recommendedMethod ?? "-"}
-            </p>
+  
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Số phương thức đủ điều kiện
+              </p>
+              <p className="mt-2 text-3xl font-bold text-slate-900">
+                {result.summary.totalEligibleMethods}
+              </p>
+            </div>
+  
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Phương thức đề xuất
+              </p>
+              <p className="mt-2 text-3xl font-bold text-slate-900">
+                {result.summary.recommendedMethod ?? "-"}
+              </p>
+            </div>
           </div>
-        </div>
-
-        <div className="mt-5">
-          <BestMethodBanner method={result.bestComparableMethod} />
-        </div>
-      </section>
-
-      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold text-slate-900">
-            So sánh các phương thức 100, 409, 500
-          </h3>
-        </div>
-
-        <MethodTable methods={result.comparableMethods} />
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-2">
-        <MethodSummaryCard
-          title="Phương thức 410"
-          method={result.method410}
-          scoreLabel="ĐIỂM XÉT TUYỂN"
-        />
-
-        <Method402Card method={result.method402} />
-      </section>
-
-      {/* <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold text-slate-900">Phương thức 301</h3>
-          <p className="mt-1 text-sm text-slate-500">
-            Đây là diện xét hồ sơ/minh chứng, không tự chấm điểm tự động.
-          </p>
-        </div>
-
-        <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
-          {result.manual301?.note ?? "Không có dữ liệu."}
-        </div>
-      </section> */}
-    </div>
-  )
-}
+  
+          <div className="mt-5">
+            <BestMethodBanner method={primaryBucket?.bestComparableMethod ?? null} />
+          </div>
+        </section>
+  
+        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold text-slate-900">
+              So sánh các phương thức 100, 409, 500
+            </h3>
+          </div>
+  
+          <MethodTable methods={primaryBucket?.comparableMethods ?? []} />
+        </section>
+  
+        <section className="grid gap-6 xl:grid-cols-2">
+          <MethodSummaryCard
+            title="Phương thức 410"
+            method={primaryBucket?.method410 ?? null}
+            scoreLabel="ĐIỂM XÉT TUYỂN"
+          />
+  
+          <Method402Card method={result.method402} />
+        </section>
+      </div>
+    )
+  }

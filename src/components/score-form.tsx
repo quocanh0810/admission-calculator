@@ -47,21 +47,21 @@ const AWARD_SUBJECT_OPTIONS = [
 
 const initialPayload: any = {
   graduationYear: 2026,
-  priorityScore: undefined,
+  priorityScore: 0.5,
   isSpecializedSchool: false,
 
   examScores: {
     toan: 9,
-    van: 6,
+    van: 7,
     anh: 8,
     ly: 8,
-    hoa: 7,
-    su: 6.5,
-    dia: 7.2,
-    gdktpl: 7.3,
-    tinhoc: 7.5,
-    congnghecongnghiep: 8,
-    congnghenongnghiep: 8,
+    hoa: 8.5,
+    su: 8.9,
+    dia: 6,
+    gdktpl: 7,
+    tinhoc: 5,
+    congnghecongnghiep: 7,
+    congnghenongnghiep: 7,
   },
 
   transcript10: {
@@ -109,7 +109,7 @@ const initialPayload: any = {
   act: undefined,
 
   certificates: {
-    ielts: undefined,
+    ielts: 5,
     toeflIbt: undefined,
     vstep: undefined,
     aptis: undefined,

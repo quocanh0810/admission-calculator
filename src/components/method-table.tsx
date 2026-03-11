@@ -62,9 +62,9 @@ export default function MethodTable({
               <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">
                 Chứng chỉ dùng
               </th>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">
+              {/* <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">
                 Ghi chú
-              </th>
+              </th> */}
             </tr>
           </thead>
 
@@ -125,9 +125,9 @@ export default function MethodTable({
                   )}
                 </td>
 
-                <td className="px-6 py-6 align-top text-slate-600">
+                {/* <td className="px-6 py-6 align-top text-slate-600">
                   {method.note ?? "-"}
-                </td>
+                </td> */}
               </tr>
             ))}
           </tbody>
