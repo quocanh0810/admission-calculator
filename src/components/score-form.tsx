@@ -58,13 +58,13 @@ const AWARD_SCOPE_WARNINGS: Record<string, string | null> = {
       "Giải này chỉ áp dụng cho tất cả các CTĐT tiên tiến, song bằng quốc tế và CTĐT định hướng chuyên sâu nghề nghiệp quốc tế. Chương trình chuẩn sẽ không được cộng điểm xét thưởng.",
   
     tiengphap:
-      "Giải này chỉ áp dụng cho Quản trị kinh doanh (Tiếng Pháp thương mại). Các ngành khác sẽ không được cộng điểm xét thưởng.",
+      "Giải này chỉ áp dụng cho TM42 - Quản trị kinh doanh (Tiếng Pháp thương mại). Các ngành khác sẽ không được cộng điểm xét thưởng.",
   
     tiengtrung:
-      "Giải này chỉ áp dụng cho Ngôn ngữ Trung Quốc. Các ngành khác sẽ không được cộng điểm xét thưởng.",
+      "Giải này chỉ áp dụng cho TM40, TM41 - Ngôn ngữ Trung Quốc. Các ngành khác sẽ không được cộng điểm xét thưởng.",
   
     tinhoc:
-      "Giải này chỉ áp dụng cho Hệ thống thông tin quản lý (Quản trị hệ thống thông tin), Kinh tế số (Phân tích kinh doanh trong môi trường số) và Khoa học máy tính (Ứng dụng trí tuệ nhân tạo trong kinh doanh). Các ngành khác sẽ không được cộng điểm xét thưởng.",
+      "Giải này chỉ áp dụng cho TM31, TM32 - Hệ thống thông tin quản lý (Quản trị hệ thống thông tin), TM39 - Kinh tế số (Phân tích kinh doanh trong môi trường số) và TM51 - Khoa học máy tính (Ứng dụng trí tuệ nhân tạo trong kinh doanh). Các ngành khác sẽ không được cộng điểm xét thưởng.",
   }
 
 const initialPayload: any = {
