@@ -101,7 +101,6 @@ export function calculateMethod100(input: CandidateInput): MethodResult {
     scoreRaw: bestTrack?.scoreDisplay ?? null,
     scoreDisplay: bestTrack?.scoreDisplay ?? null,
     maxScale: 30,
-    note: "Đã cộng điểm khuyến khích và áp dụng ưu tiên giảm dần.",
     bestCombination: bestTrack?.bestCombination,
     certificateUsed: cert ?? undefined,
     priorityBase: bestTrack?.priorityBase ?? input.priorityScore,

@@ -69,9 +69,8 @@ export function calculateMethod409(input: CandidateInput): MethodResult {
 
       if (typeof toan !== "number" || typeof other !== "number") continue
 
-      const baseWithoutBonus = round2(
-        (toan as number) + (other as number) + validCert.convertedScore,
-      )
+      const baseWithoutBonus =
+        (toan as number) + (other as number) + validCert.convertedScore
 
       const bonus = calculateTotalBonus30({
         priorityBase: input.priorityScore,

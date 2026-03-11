@@ -72,11 +72,13 @@ export interface Toeic4Skills {
 
 export interface CandidateInput {
   graduationYear: 2026
+
   priorityScore: number
+  priorityAreaScore?: number
+  priorityObjectScore?: number
+
   isSpecializedSchool?: boolean
-
   examScores: Partial<Record<Subject, number>>
-
   transcript10: TranscriptYearScores
   transcript11: TranscriptYearScores
   transcript12: TranscriptYearScores

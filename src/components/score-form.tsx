@@ -45,62 +45,86 @@ const AWARD_SUBJECT_OPTIONS = [
   { value: "tinhoc", label: "Tin học" },
 ] as const
 
+const AWARD_SCOPE_WARNINGS: Record<string, string | null> = {
+    toan: null,
+    ly: null,
+    hoa: null,
+    anh: null,
+    van: null,
+  
+    su: "Giải này chỉ áp dụng cho tất cả các CTĐT tiên tiến, song bằng quốc tế và CTĐT định hướng chuyên sâu nghề nghiệp quốc tế. Chương trình chuẩn sẽ không được cộng điểm xét thưởng.",
+    dia: "Giải này chỉ áp dụng cho tất cả các CTĐT tiên tiến, song bằng quốc tế và CTĐT định hướng chuyên sâu nghề nghiệp quốc tế. Chương trình chuẩn sẽ không được cộng điểm xét thưởng.",
+    gdktpl:
+      "Giải này chỉ áp dụng cho tất cả các CTĐT tiên tiến, song bằng quốc tế và CTĐT định hướng chuyên sâu nghề nghiệp quốc tế. Chương trình chuẩn sẽ không được cộng điểm xét thưởng.",
+  
+    tiengphap:
+      "Giải này chỉ áp dụng cho Quản trị kinh doanh (Tiếng Pháp thương mại). Các ngành khác sẽ không được cộng điểm xét thưởng.",
+  
+    tiengtrung:
+      "Giải này chỉ áp dụng cho Ngôn ngữ Trung Quốc. Các ngành khác sẽ không được cộng điểm xét thưởng.",
+  
+    tinhoc:
+      "Giải này chỉ áp dụng cho Hệ thống thông tin quản lý (Quản trị hệ thống thông tin), Kinh tế số (Phân tích kinh doanh trong môi trường số) và Khoa học máy tính (Ứng dụng trí tuệ nhân tạo trong kinh doanh). Các ngành khác sẽ không được cộng điểm xét thưởng.",
+  }
+
 const initialPayload: any = {
   graduationYear: 2026,
-  priorityScore: 0.5,
+  priorityScore: 0,
+  priorityAreaScore: undefined,
+  priorityObjectScore: undefined,
   isSpecializedSchool: false,
 
   examScores: {
-    toan: 9,
-    van: 7,
-    anh: 8,
-    ly: 8,
-    hoa: 8.5,
-    su: 8.9,
-    dia: 6,
-    gdktpl: 7,
-    tinhoc: 5,
-    congnghecongnghiep: 7,
-    congnghenongnghiep: 7,
+    toan: undefined,
+    van: undefined,
+    anh: undefined,
+    ly: undefined,
+    hoa: undefined,
+    su: undefined,
+    dia: undefined,
+    gdktpl: undefined,
+    tinhoc: undefined,
+    congnghecongnghiep: undefined,
+    congnghenongnghiep: undefined,
   },
 
   transcript10: {
-    toan: 8,
-    ly: 7,
-    hoa: 7,
-    van: 8,
-    su: 7,
-    dia: 7.5,
-    gdktpl: 6.5,
-    tinhoc: 7,
-    congnghecongnghiep: 8,
-    congnghenongnghiep: 8,
+    toan: undefined,
+    ly: undefined,
+    hoa: undefined,
+    van: undefined,
+    su: undefined,
+    dia: undefined,
+    gdktpl: undefined,
+    tinhoc: undefined,
+    congnghecongnghiep: undefined,
+    congnghenongnghiep: undefined,
   },
   
   transcript11: {
-    toan: 9,
-    ly: 9,
-    hoa: 8.5,
-    van: 8,
-    su: 7.5,
-    dia: 7.5,
-    gdktpl: 6,
-    tinhoc: 8,
-    congnghecongnghiep: 7,
-    congnghenongnghiep: 8,
+    toan: undefined,
+    ly: undefined,
+    hoa: undefined,
+    van: undefined,
+    su: undefined,
+    dia: undefined,
+    gdktpl: undefined,
+    tinhoc: undefined,
+    congnghecongnghiep: undefined,
+    congnghenongnghiep: undefined,
   },
   
   transcript12: {
-    toan: 9,
-    ly: 9,
-    hoa: 9,
-    van: 8,
-    su: 7,
-    dia: 6.5,
-    gdktpl: 6,
-    tinhoc: 7,
-    congnghecongnghiep: 8,
-    congnghenongnghiep: 8,
+    toan: undefined,
+    ly: undefined,
+    hoa: undefined,
+    van: undefined,
+    su: undefined,
+    dia: undefined,
+    gdktpl: undefined,
+    tinhoc: undefined,
+    congnghecongnghiep: undefined,
+    congnghenongnghiep: undefined,
   },
 
   hsa: undefined,
@@ -109,7 +133,7 @@ const initialPayload: any = {
   act: undefined,
 
   certificates: {
-    ielts: 5,
+    ielts: undefined,
     toeflIbt: undefined,
     vstep: undefined,
     aptis: undefined,
@@ -231,6 +255,10 @@ export default function ScoreForm() {
 
   const hasAward = payload.awards && payload.awards.length > 0
 
+  const selectedAwardSubject = payload.awards?.[0]?.subject
+  const awardScopeWarning =
+  selectedAwardSubject ? AWARD_SCOPE_WARNINGS[selectedAwardSubject] : null
+
   function setExamScore(subject: string, value: string) {
     setPayload((prev: any) => ({
       ...prev,
@@ -313,10 +341,11 @@ export default function ScoreForm() {
   
     try {
   
-      const requestPayload = {
-        ...payload,
-        priorityScore: payload.priorityScore ?? 0,
-      }
+        const requestPayload = {
+            ...payload,
+            priorityScore:
+              (payload.priorityAreaScore ?? 0) + (payload.priorityObjectScore ?? 0),
+          }
   
       const response = await fetch("/api/calculate", {
         method: "POST",
@@ -421,7 +450,7 @@ export default function ScoreForm() {
 
         <SectionCard
           title="3. Điểm học bạ 3 năm lớp 10,11,12 "
-          description="Phần này dùng để tính phương thức học bạ kết hợp chứng chỉ ngoại ngữ."
+          description="Tính phương thức học bạ kết hợp chứng chỉ ngoại ngữ."
         >
           <div className="space-y-6">
             {transcriptYears.map((year) => (
@@ -452,168 +481,193 @@ export default function ScoreForm() {
         </SectionCard>
 
         <SectionCard
-  title="4. Điểm ưu tiên và chứng chỉ ngoại ngữ"
-  description="Nhập điểm ưu tiên và các chứng chỉ ngoại ngữ theo đúng bảng quy đổi."
->
-  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-    <InputField
-    label="Điểm ưu tiên"
-    value={payload.priorityScore ?? ""}
-    onChange={(value) =>
-        setPayload((prev: any) => ({
-        ...prev,
-        priorityScore: value === "" ? undefined : Number(value),
-        }))
-    }
-    max={3}
-    />
-  </div>
+            title="4. Điểm ưu tiên"
+            description="Nhập riêng điểm ưu tiên khu vực và điểm ưu tiên đối tượng."
+            >
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <InputField
+                label="Điểm ưu tiên khu vực"
+                value={payload.priorityAreaScore ?? ""}
+                onChange={(value) =>
+                    setPayload((prev: any) => ({
+                    ...prev,
+                    priorityAreaScore: value === "" ? undefined : Number(value),
+                    }))
+                }
+                max={1}
+                />
 
-  <div className="mt-6">
-    <h3 className="mb-3 text-base font-semibold text-slate-800">
-      Chứng chỉ ngoại ngữ
-    </h3>
+                <InputField
+                label="Điểm ưu tiên đối tượng"
+                value={payload.priorityObjectScore ?? ""}
+                onChange={(value) =>
+                    setPayload((prev: any) => ({
+                    ...prev,
+                    priorityObjectScore: value === "" ? undefined : Number(value),
+                    }))
+                }
+                max={2}
+                />
+            </div>
 
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-      <InputField
-        label="IELTS Academic"
-        value={payload.certificates?.ielts}
-        onChange={(value) => setCertificateField("ielts", value)}
-        step="0.5"
-        max={9}
-      />
-
-      <InputField
-        label="TOEFL iBT"
-        value={payload.certificates?.toeflIbt}
-        onChange={(value) => setCertificateField("toeflIbt", value)}
-        step="1"
-        max={120}
-      />
-
-      <InputField
-        label="VSTEP"
-        value={payload.certificates?.vstep}
-        onChange={(value) => setCertificateField("vstep", value)}
-        step="0.5"
-        max={10}
-      />
-
-      <InputField
-        label="APTIS ESOL"
-        value={payload.certificates?.aptis}
-        onChange={(value) => setCertificateField("aptis", value)}
-        step="1"
-        max={200}
-      />
-
-      <InputField
-        label="TCF"
-        value={payload.certificates?.tcf}
-        onChange={(value) => setCertificateField("tcf", value)}
-        step="1"
-        max={699}
-      />
-
-      <SelectField
-        label="DELF"
-        value={payload.certificates?.delf ?? ""}
-        onChange={(value) =>
-          setPayload((prev: any) => ({
-            ...prev,
-            certificates: {
-              ...prev.certificates,
-              delf: value === "" ? undefined : value,
-            },
-          }))
-        }
-        options={[
-          { value: "B1", label: "B1" },
-          { value: "B2", label: "B2" },
-          { value: "C1", label: "C1" },
-          { value: "C2", label: "C2" },
-        ]}
-      />
-
-      <SelectField
-        label="HSK cấp độ"
-        value={
-          payload.certificates?.hskLevel != null
-            ? String(payload.certificates.hskLevel)
-            : ""
-        }
-        onChange={(value) =>
-          setPayload((prev: any) => ({
-            ...prev,
-            certificates: {
-              ...prev.certificates,
-              hskLevel: value === "" ? undefined : Number(value),
-            },
-          }))
-        }
-        options={[
-          { value: "3", label: "Cấp độ 3" },
-          { value: "4", label: "Cấp độ 4" },
-          { value: "5", label: "Cấp độ 5" },
-          { value: "6", label: "Cấp độ 6" },
-        ]}
-      />
-    </div>
-
-    <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-      <h4 className="mb-3 text-sm font-semibold text-slate-800">
-        TOEIC 4 kỹ năng
-      </h4>
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <InputField
-          label="Nghe đọc (Listening + Reading)"
-          value={payload.certificates?.toeic4Skills?.listeningReading}
-          onChange={(value) =>
-            setPayload((prev: any) => ({
-              ...prev,
-              certificates: {
-                ...prev.certificates,
-                toeic4Skills: {
-                  listeningReading:
-                    value === "" ? undefined : Number(value),
-                  speakingWriting:
-                    prev.certificates?.toeic4Skills?.speakingWriting,
-                },
-              },
-            }))
-          }
-          step="1"
-          max={990}
-        />
-
-        <InputField
-          label="Nói viết (Speaking + Writing)"
-          value={payload.certificates?.toeic4Skills?.speakingWriting}
-          onChange={(value) =>
-            setPayload((prev: any) => ({
-              ...prev,
-              certificates: {
-                ...prev.certificates,
-                toeic4Skills: {
-                  listeningReading:
-                    prev.certificates?.toeic4Skills?.listeningReading,
-                  speakingWriting:
-                    value === "" ? undefined : Number(value),
-                },
-              },
-            }))
-          }
-          step="1"
-          max={400}
-        />
-      </div>
-    </div>
-  </div>
-</SectionCard>
+            <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <p className="text-sm text-slate-600">
+                Tổng điểm ưu tiên = điểm khu vực + điểm đối tượng
+                </p>
+                <p className="mt-1 text-lg font-semibold text-slate-900">
+                {(
+                    (payload.priorityAreaScore ?? 0) +
+                    (payload.priorityObjectScore ?? 0)
+                )
+                    .toString()
+                    .replace(".", ",")}
+                </p>
+            </div>
+        </SectionCard>
 
         <SectionCard
-          title="4. Giải học sinh giỏi cấp tỉnh / thành phố"
+            title="5. Chứng chỉ ngoại ngữ"
+            description="Nhập các chứng chỉ ngoại ngữ theo đúng bảng quy đổi."
+            >
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <InputField
+                label="IELTS Academic"
+                value={payload.certificates?.ielts}
+                onChange={(value) => setCertificateField("ielts", value)}
+                step="0.5"
+                max={9}
+                />
+
+                <InputField
+                label="TOEFL iBT"
+                value={payload.certificates?.toeflIbt}
+                onChange={(value) => setCertificateField("toeflIbt", value)}
+                step="1"
+                max={120}
+                />
+
+                <InputField
+                label="VSTEP"
+                value={payload.certificates?.vstep}
+                onChange={(value) => setCertificateField("vstep", value)}
+                step="0.5"
+                max={10}
+                />
+
+                <InputField
+                label="APTIS ESOL"
+                value={payload.certificates?.aptis}
+                onChange={(value) => setCertificateField("aptis", value)}
+                step="1"
+                max={200}
+                />
+
+                <InputField
+                label="TCF"
+                value={payload.certificates?.tcf}
+                onChange={(value) => setCertificateField("tcf", value)}
+                step="1"
+                max={699}
+                />
+
+                <SelectField
+                label="DELF"
+                value={payload.certificates?.delf ?? ""}
+                onChange={(value) =>
+                    setPayload((prev: any) => ({
+                    ...prev,
+                    certificates: {
+                        ...prev.certificates,
+                        delf: value === "" ? undefined : value,
+                    },
+                    }))
+                }
+                options={[
+                    { value: "B1", label: "B1" },
+                    { value: "B2", label: "B2" },
+                    { value: "C1", label: "C1" },
+                    { value: "C2", label: "C2" },
+                ]}
+                />
+
+                <SelectField
+                label="HSK cấp độ"
+                value={
+                    payload.certificates?.hskLevel != null
+                    ? String(payload.certificates.hskLevel)
+                    : ""
+                }
+                onChange={(value) =>
+                    setPayload((prev: any) => ({
+                    ...prev,
+                    certificates: {
+                        ...prev.certificates,
+                        hskLevel: value === "" ? undefined : Number(value),
+                    },
+                    }))
+                }
+                options={[
+                    { value: "3", label: "Cấp độ 3" },
+                    { value: "4", label: "Cấp độ 4" },
+                    { value: "5", label: "Cấp độ 5" },
+                    { value: "6", label: "Cấp độ 6" },
+                ]}
+                />
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <h4 className="mb-3 text-sm font-semibold text-slate-800">
+                TOEIC 4 kỹ năng
+                </h4>
+
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <InputField
+                    label="Nghe đọc (Listening + Reading)"
+                    value={payload.certificates?.toeic4Skills?.listeningReading}
+                    onChange={(value) =>
+                    setPayload((prev: any) => ({
+                        ...prev,
+                        certificates: {
+                        ...prev.certificates,
+                        toeic4Skills: {
+                            listeningReading:
+                            value === "" ? undefined : Number(value),
+                            speakingWriting:
+                            prev.certificates?.toeic4Skills?.speakingWriting,
+                        },
+                        },
+                    }))
+                    }
+                    step="1"
+                    max={990}
+                />
+
+                <InputField
+                    label="Nói viết (Speaking + Writing)"
+                    value={payload.certificates?.toeic4Skills?.speakingWriting}
+                    onChange={(value) =>
+                    setPayload((prev: any) => ({
+                        ...prev,
+                        certificates: {
+                        ...prev.certificates,
+                        toeic4Skills: {
+                            listeningReading:
+                            prev.certificates?.toeic4Skills?.listeningReading,
+                            speakingWriting:
+                            value === "" ? undefined : Number(value),
+                        },
+                        },
+                    }))
+                    }
+                    step="1"
+                    max={400}
+                />
+                </div>
+            </div>
+            </SectionCard>
+
+        <SectionCard
+          title="6. Giải học sinh giỏi cấp tỉnh / thành phố"
           description="Nếu có giải, hãy bật mục này và chọn đúng môn đạt giải cùng mức giải."
         >
           <label className="mb-5 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
@@ -627,25 +681,33 @@ export default function ScoreForm() {
           </label>
 
           {hasAward ? (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <SelectField
-                label="Môn đạt giải"
-                value={payload.awards?.[0]?.subject ?? "toan"}
-                onChange={setAwardSubject}
-                options={AWARD_SUBJECT_OPTIONS}
-              />
-
-              <SelectField
-                label="Mức giải"
-                value={payload.awards?.[0]?.level ?? "ba"}
-                onChange={setAwardLevel}
-                options={[
-                  { value: "nhat", label: "Giải Nhất (1.5 điểm)" },
-                  { value: "nhi", label: "Giải Nhì (1.25 điểm)" },
-                  { value: "ba", label: "Giải Ba (1.0 điểm)" },
-                ]}
-              />
-            </div>
+            <div className="space-y-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <SelectField
+                    label="Môn đạt giải"
+                    value={payload.awards?.[0]?.subject ?? "toan"}
+                    onChange={setAwardSubject}
+                    options={AWARD_SUBJECT_OPTIONS}
+                />
+            
+                <SelectField
+                    label="Mức giải"
+                    value={payload.awards?.[0]?.level ?? "ba"}
+                    onChange={setAwardLevel}
+                    options={[
+                    { value: "nhat", label: "Giải Nhất (1.5 điểm)" },
+                    { value: "nhi", label: "Giải Nhì (1.25 điểm)" },
+                    { value: "ba", label: "Giải Ba (1.0 điểm)" },
+                    ]}
+                />
+                </div>
+            
+                {awardScopeWarning ? (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
+                    {awardScopeWarning}
+                </div>
+                ) : null}
+          </div>
           ) : (
             <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-500">
               Thí sinh không có giải thì không chọn mục này.
@@ -654,7 +716,7 @@ export default function ScoreForm() {
         </SectionCard>
 
         <SectionCard
-            title="5. Thông tin trường THPT"
+            title="7. Thông tin trường THPT"
             description="Nếu không học trường THPT chuyên / trọng điểm quốc gia vui lòng không chọn mục này"
             >
             <label className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">

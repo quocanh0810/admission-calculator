@@ -73,7 +73,7 @@ export function calculateMethod410(
 
     if (toanAvg == null || otherAvg == null) continue
 
-    const baseWithoutBonus = round2(toanAvg + otherAvg + cert.convertedScore)
+    const baseWithoutBonus = toanAvg + otherAvg + cert.convertedScore
 
     const bonus = calculateTotalBonus30({
       priorityBase: input.priorityScore,

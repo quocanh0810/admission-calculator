@@ -278,7 +278,7 @@ function MethodSummaryCard({
           {method.certificateUsed ? (
             <div className="rounded-xl border border-slate-200 p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Chứng chỉ sử dụng
+                Chứng chỉ dùng
               </p>
               <p className="mt-2 text-sm text-slate-700">
                 {method.certificateUsed.certificateType} -{" "}
@@ -331,116 +331,56 @@ function Method402Card({ method }: { method: MethodResult | null }) {
               <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
                 Nhánh tốt nhất hiện tại
               </p>
-              <p className="mt-2 text-2xl font-bold text-emerald-900">
+              <p className="mt-2 text-3xl font-bold text-emerald-900">
                 {method.bestBranch402 ?? "-"}
               </p>
               <p className="mt-1 text-sm text-emerald-800">
-                Điểm cuối: {method.scoreDisplay ?? "-"} / thang {method.maxScale}
+                Điểm xét tuyển: {method.scoreDisplay ?? "-"}
               </p>
             </div>
   
-            <div className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               {branches.map((branch) => {
                 const isBest = branch.branch === method.bestBranch402
   
                 return (
                   <div
                     key={branch.branch}
-                    className={`rounded-2xl border p-4 ${
+                    className={`rounded-2xl border p-5 ${
                       isBest
                         ? "border-emerald-200 bg-emerald-50"
                         : "border-slate-200 bg-slate-50"
                     }`}
                   >
-                    <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="text-lg font-bold text-slate-900">
-                          {branch.branch}
-                        </p>
-                        <p className="text-sm text-slate-600">
-                          Thang điểm gốc: {branch.maxScale}
-                        </p>
-                      </div>
-  
-                      <div className="text-right">
-                        <p className="text-xs uppercase tracking-wide text-slate-500">
-                          Tổng điểm xét tuyển
-                        </p>
+                    
+                    <div className="flex min-h-[84px] items-start justify-between gap-4">
+                    <div className="min-w-0">
                         <p className="text-2xl font-bold text-slate-900">
-                          {branch.finalScore}
+                        {branch.branch}
                         </p>
-                      </div>
+                        <p className="mt-1 text-sm text-slate-600 whitespace-nowrap">
+                        Thang điểm gốc: {branch.maxScale}
+                        </p>
                     </div>
-  
-                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                        <div className="rounded-xl bg-white px-4 py-4 min-h-[132px]">
-                            <div className="h-[44px]">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                Điểm gốc bài thi
-                            </p>
-                            </div>
-                            <p className="mt-3 text-lg font-bold text-slate-900">{branch.rawBase}</p>
-                        </div>
 
-                        <div className="rounded-xl bg-white px-4 py-4 min-h-[132px]">
-                            <div className="h-[44px]">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                Ưu tiên sau giảm
-                            </p>
-                            </div>
-                            <p className="mt-3 text-lg font-bold text-slate-900">
-                            {Number(branch.priorityAdjusted.toFixed(9))}
-                            </p>
-                        </div>
+                    <div className="shrink-0">
+                        {isBest ? (
+                        <span className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                            Tốt nhất
+                        </span>
+                        ) : null}
+                    </div>
+                    </div>
 
-                        <div className="rounded-xl bg-white px-4 py-4 min-h-[132px]">
-                            <div className="h-[44px]">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                Điểm ưu tiên
-                            </p>
-                            <p className="text-xs text-slate-500">thang {branch.maxScale}</p>
-                            </div>
-                            <p className="mt-3 text-lg font-bold text-slate-900">
-                            {Number(branch.priorityAdjustedScaled.toFixed(9))}
-                            </p>
-                        </div>
-
-                        <div className="rounded-xl bg-white px-4 py-4 min-h-[132px]">
-                            <div className="h-[44px]">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                Điểm xét thưởng
-                            </p>
-                            </div>
-                            <p className="mt-3 text-lg font-bold text-slate-900">{branch.awardScore}</p>
-                        </div>
-
-                        <div className="rounded-xl bg-white px-4 py-4 min-h-[132px]">
-                            <div className="h-[44px]">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                Điểm khuyến khích
-                            </p>
-                            </div>
-                            <p className="mt-3 text-lg font-bold text-slate-900">
-                            {branch.encouragementScore}
-                            </p>
-                        </div>
-
-                        <div className="rounded-xl bg-white px-4 py-4 min-h-[132px]">
-                            <div className="h-[44px]">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                Tổng điểm cộng thang 30
-                            </p>
-                            </div>
-                            <p className="mt-3 text-lg font-bold text-slate-900">{branch.totalBonus30}</p>
-                        </div>
-                        </div>
-  
-                    <div className="mt-3 rounded-xl bg-white px-4 py-3 text-sm text-slate-600">
-                      Công thức tính: {branch.rawBase} + {branch.totalBonusScaled} ={" "}
-                      <span className="font-semibold text-slate-900">
+                    <div className="mt-5 rounded-xl bg-white px-4 py-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Điểm xét tuyển
+                    </p>
+                    <p className="mt-2 text-3xl font-bold text-slate-900">
                         {branch.finalScore}
-                      </span>
+                    </p>
                     </div>
+                   
                   </div>
                 )
               })}
@@ -449,18 +389,12 @@ function Method402Card({ method }: { method: MethodResult | null }) {
             {method.certificateUsed ? (
               <div className="rounded-xl border border-slate-200 p-4">
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Chứng chỉ sử dụng để tính khuyến khích
+                  Chứng chỉ dùng
                 </p>
                 <p className="mt-2 text-sm text-slate-700">
                   {method.certificateUsed.certificateType} -{" "}
                   {String(method.certificateUsed.rawValue)}
                 </p>
-              </div>
-            ) : null}
-  
-            {method.note ? (
-              <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                {method.note}
               </div>
             ) : null}
           </div>

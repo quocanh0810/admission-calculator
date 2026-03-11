@@ -1,4 +1,8 @@
-import { CandidateInput, Method402BranchResult, MethodResult } from "@/types/admission"
+import {
+  CandidateInput,
+  Method402BranchResult,
+  MethodResult,
+} from "@/types/admission"
 import { getBestCertificateConversion } from "@/data/certificateRules"
 import { getAwardScore } from "@/data/awardRules"
 import {
@@ -49,7 +53,6 @@ export function calculateMethod402(input: CandidateInput): MethodResult {
   }
 
   const branches402: Method402BranchResult[] = candidates.map((candidate) => {
-    // 1) Tính điểm cộng thang 30 RIÊNG cho từng nhánh
     const bonus30 = calculateTotalBonus30({
       priorityBase: input.priorityScore,
       totalScoreBeforePriority: candidate.rawBase,
@@ -58,19 +61,14 @@ export function calculateMethod402(input: CandidateInput): MethodResult {
       encouragementScore: encouragement,
     })
 
-    // 2) Quy đổi RIÊNG phần ưu tiên sau giảm sang thang điểm nhánh
-    const priorityAdjustedScaled = round2(
-      (bonus30.priorityAdjusted * candidate.maxScale) / 30,
-    )
+    const priorityAdjustedScaled =
+      (bonus30.priorityAdjusted * candidate.maxScale) / 30
 
-    // 3) Quy đổi TỔNG điểm cộng sang thang điểm nhánh
     const totalBonusScaled = scaleBonus30ToScaleN(
       bonus30.totalBonus30,
       candidate.maxScale,
     )
 
-    // 4) Tính điểm cuối cùng
-    // Nếu theo yêu cầu của bạn: không vượt quá max scale của nhánh
     const finalScore = round2(
       Math.min(candidate.rawBase + totalBonusScaled, candidate.maxScale),
     )
@@ -79,7 +77,7 @@ export function calculateMethod402(input: CandidateInput): MethodResult {
       branch: candidate.branch,
       maxScale: candidate.maxScale,
 
-      rawBase: round2(candidate.rawBase),
+      rawBase: candidate.rawBase,
       priorityBase: input.priorityScore,
       priorityAdjusted: bonus30.priorityAdjusted,
       priorityAdjustedScaled,

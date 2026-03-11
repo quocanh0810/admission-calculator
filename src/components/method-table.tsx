@@ -23,11 +23,11 @@ function formatSubjectsVietnamese(subjects: string[]) {
 function getMethodLabel(method: string) {
   switch (method) {
     case "100":
-      return "Điểm thi THPT"
+      return "Điểm thi THPT năm 2026"
     case "409":
-      return "Chứng chỉ ngoại ngữ + THPT"
+      return "Chứng chỉ ngoại ngữ + Điểm thi THPT năm 2026"
     case "500":
-      return "THPT + giải HSG"
+      return "Điểm thi THPT năm 2026 + Giải HSG"
     default:
       return method
   }

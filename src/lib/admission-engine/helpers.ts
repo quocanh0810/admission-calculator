@@ -6,6 +6,15 @@ import {
 } from "@/types/admission"
 import { combinations } from "@/data/combinations"
 
+export function round2(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100
+}
+
+/**
+ * Lấy tổ hợp tốt nhất trong một nhóm tổ hợp.
+ * KHÔNG làm tròn ở bước tính tổng điểm tổ hợp.
+ * Chỉ dùng để so sánh nội bộ; nếu cần hiển thị cuối cùng thì round ở bước ngoài.
+ */
 export function getBestCombinationExamScoreByGroup(
   input: CandidateInput,
   allowedCombinationCodes: CombinationCode[],
@@ -19,12 +28,11 @@ export function getBestCombinationExamScoreByGroup(
 
     if (scores.some((s) => typeof s !== "number")) continue
 
-    const score = round2(
+    const score =
       (scores[0] as number) +
-        (scores[1] as number) +
-        (scores[2] as number) +
-        extra,
-    )
+      (scores[1] as number) +
+      (scores[2] as number) +
+      extra
 
     if (!best || score > best.score) {
       best = { combination: code, subjects, score }
@@ -34,21 +42,17 @@ export function getBestCombinationExamScoreByGroup(
   return best
 }
 
-export function round2(value: number): number {
-  return Math.round((value + Number.EPSILON) * 100) / 100
-}
-
 /**
  * Điểm ưu tiên giảm dần theo quy chế.
- * Thang 30: mốc 22.5, mẫu số 7.5
- * Tổng quát: mốc = 75% maxScale, mẫu số = 25% maxScale
+ * - Thang 30: mốc 22.5, mẫu số 7.5
+ * - Tổng quát: mốc = 75% maxScale, mẫu số = 25% maxScale
+ *
+ * KHÔNG làm tròn ở bước trung gian.
  */
-
 export function calculateAdjustedPriority(
   basePriority: number,
   totalScoreBeforePriority: number,
   maxScale: number,
-  shouldRound = true,
 ): number {
   if (basePriority <= 0) return 0
 
@@ -56,19 +60,17 @@ export function calculateAdjustedPriority(
   const denominator = maxScale * 0.25
 
   if (totalScoreBeforePriority <= threshold) {
-    return shouldRound ? round2(basePriority) : basePriority
+    return basePriority
   }
 
   if (totalScoreBeforePriority >= maxScale) {
     return 0
   }
 
-  const rawValue = Math.max(
+  return Math.max(
     0,
     ((maxScale - totalScoreBeforePriority) / denominator) * basePriority,
   )
-
-  return shouldRound ? round2(rawValue) : rawValue
 }
 
 /**
@@ -76,6 +78,8 @@ export function calculateAdjustedPriority(
  * - award tối đa 1.5
  * - encouragement tối đa 1.5
  * - total bonus = priorityAdjusted + award + encouragement tối đa 3
+ *
+ * KHÔNG làm tròn ở bước trung gian.
  */
 export function calculateTotalBonus30(params: {
   priorityBase: number
@@ -83,7 +87,6 @@ export function calculateTotalBonus30(params: {
   maxScaleForPriorityRule: number
   awardScore: number
   encouragementScore: number
-  roundPriorityAdjusted?: boolean
 }) {
   const {
     priorityBase,
@@ -91,14 +94,12 @@ export function calculateTotalBonus30(params: {
     maxScaleForPriorityRule,
     awardScore,
     encouragementScore,
-    roundPriorityAdjusted = true,
   } = params
 
   const priorityAdjusted = calculateAdjustedPriority(
     priorityBase,
     totalScoreBeforePriority,
     maxScaleForPriorityRule,
-    roundPriorityAdjusted,
   )
 
   const safeAward = Math.min(awardScore, 1.5)
@@ -111,19 +112,27 @@ export function calculateTotalBonus30(params: {
 
   return {
     priorityAdjusted,
-    awardScore: round2(safeAward),
-    encouragementScore: round2(safeEncouragement),
-    totalBonus30: round2(totalBonus30),
+    awardScore: safeAward,
+    encouragementScore: safeEncouragement,
+    totalBonus30,
   }
 }
 
+/**
+ * Quy đổi điểm cộng thang 30 sang thang N.
+ * KHÔNG làm tròn ở bước trung gian.
+ */
 export function scaleBonus30ToScaleN(
   totalBonus30: number,
   maxScale: number,
 ): number {
-  return round2((totalBonus30 * maxScale) / 30)
+  return (totalBonus30 * maxScale) / 30
 }
 
+/**
+ * Tính trung bình học bạ 3 năm.
+ * Hàm này vẫn round2 vì đây là một giá trị hiển thị/nghiệp vụ đầu vào đã quy chuẩn.
+ */
 export function getTranscriptAverage(
   input: CandidateInput,
   subject: TranscriptSubject,
@@ -143,6 +152,11 @@ export function getTranscriptAverage(
   return round2((y10 + y11 + y12) / 3)
 }
 
+/**
+ * Lấy tổ hợp điểm thi THPT tốt nhất.
+ * KHÔNG làm tròn ở bước tính tổng tổ hợp.
+ * Điểm xét tuyển cuối cùng sẽ round ở file method tương ứng.
+ */
 export function getBestCombinationExamScore(
   input: CandidateInput,
   allowedCombinationCodes: CombinationCode[],
@@ -156,12 +170,11 @@ export function getBestCombinationExamScore(
 
     if (scores.some((s) => typeof s !== "number")) continue
 
-    const score = round2(
+    const score =
       (scores[0] as number) +
-        (scores[1] as number) +
-        (scores[2] as number) +
-        extra,
-    )
+      (scores[1] as number) +
+      (scores[2] as number) +
+      extra
 
     if (!best || score > best.score) {
       best = { combination: code, subjects, score }
@@ -171,6 +184,13 @@ export function getBestCombinationExamScore(
   return best
 }
 
+/**
+ * Lấy tổ hợp tốt nhất cho phương thức 409.
+ * Công thức gốc:
+ * Toán + môn thứ ba + điểm quy đổi chứng chỉ + extra
+ *
+ * KHÔNG làm tròn ở bước trung gian.
+ */
 export function getBestCombinationFor409(
   input: CandidateInput,
   allowedCombinationCodes: CombinationCode[],
@@ -181,6 +201,7 @@ export function getBestCombinationFor409(
 
   for (const code of allowedCombinationCodes) {
     const subjects = combinations[code]
+
     if (!subjects.includes("toan") || !subjects.includes("anh")) continue
 
     const nonLanguage = subjects.find((s) => s !== "toan" && s !== "anh")
@@ -191,7 +212,11 @@ export function getBestCombinationFor409(
 
     if (typeof toan !== "number" || typeof other !== "number") continue
 
-    const score = round2(toan + other + certificateConvertedScore + extra)
+    const score =
+      (toan as number) +
+      (other as number) +
+      certificateConvertedScore +
+      extra
 
     if (!best || score > best.score) {
       best = { combination: code, subjects, score }
@@ -201,6 +226,13 @@ export function getBestCombinationFor409(
   return best
 }
 
+/**
+ * Lấy tổ hợp tốt nhất cho phương thức 410.
+ * Công thức gốc:
+ * TB Toán + TB môn thứ ba + điểm quy đổi chứng chỉ + extra
+ *
+ * KHÔNG làm tròn ở bước trung gian.
+ */
 export function getBestCombinationFor410(
   input: CandidateInput,
   allowedCombinationCodes: CombinationCode[],
@@ -211,6 +243,7 @@ export function getBestCombinationFor410(
 
   for (const code of allowedCombinationCodes) {
     const subjects = combinations[code]
+
     if (!subjects.includes("toan") || !subjects.includes("anh")) continue
 
     const nonLanguage = subjects.find((s) => s !== "toan" && s !== "anh")
@@ -225,7 +258,7 @@ export function getBestCombinationFor410(
 
     if (toanAvg == null || otherAvg == null) continue
 
-    const score = round2(toanAvg + otherAvg + certificateConvertedScore + extra)
+    const score = toanAvg + otherAvg + certificateConvertedScore + extra
 
     if (!best || score > best.score) {
       best = { combination: code, subjects, score }
