@@ -558,14 +558,6 @@ export default function ScoreForm() {
           { value: "6", label: "Cấp độ 6" },
         ]}
       />
-
-      <InputField
-        label="HSK điểm (nếu có)"
-        value={payload.certificates?.hskScore}
-        onChange={(value) => setCertificateField("hskScore", value)}
-        step="1"
-        max={300}
-      />
     </div>
 
     <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
