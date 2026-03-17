@@ -1,4 +1,4 @@
-import { CandidateInput, CertificateConversionResult, Toeic4Skills } from "@/types/admission"
+import { Subject, CandidateInput, CertificateConversionResult, Toeic4Skills } from "@/types/admission"
 import { isCertificateAllowedForMajor } from "@/data/admissionRules"
 
 export function convertIelts(
@@ -473,4 +473,79 @@ export function getBestCertificateConversionForMajor(
     }
     return b.encouragementScore - a.encouragementScore
   })[0]
+}
+
+function getEnglishCertificateResults(
+  certificates: CandidateInput["certificates"],
+): CertificateConversionResult[] {
+  if (!certificates) return []
+
+  return [
+    convertIelts(certificates.ielts),
+    convertToeflIbt(certificates.toeflIbt),
+    convertVstep(certificates.vstep),
+    convertAptis(certificates.aptis),
+    convertToeic4Skills(certificates.toeic4Skills),
+  ].filter(Boolean) as CertificateConversionResult[]
+}
+
+function getChineseCertificateResults(
+  certificates: CandidateInput["certificates"],
+): CertificateConversionResult[] {
+  if (!certificates) return []
+
+  return [
+    convertHsk(certificates.hskLevel),
+  ].filter(Boolean) as CertificateConversionResult[]
+}
+
+function getFrenchCertificateResults(
+  certificates: CandidateInput["certificates"],
+): CertificateConversionResult[] {
+  if (!certificates) return []
+
+  return [
+    convertTcf(certificates.tcf),
+    convertDelf(certificates.delf),
+  ].filter(Boolean) as CertificateConversionResult[]
+}
+
+function pickBestCertificate(
+  results: CertificateConversionResult[],
+): CertificateConversionResult | null {
+  if (!results.length) return null
+
+  return [...results].sort((a, b) => {
+    if (b.convertedScore !== a.convertedScore) {
+      return b.convertedScore - a.convertedScore
+    }
+    return b.encouragementScore - a.encouragementScore
+  })[0]
+}
+
+export function getBestCertificateConversionForCombination(params: {
+  certificates: CandidateInput["certificates"]
+  majorCode: string
+  subjects: Subject[]
+}): CertificateConversionResult | null {
+  const { certificates, majorCode, subjects } = params
+  if (!certificates) return null
+
+  let candidates: CertificateConversionResult[] = []
+
+  if (subjects.includes("tiengtrung")) {
+    candidates = getChineseCertificateResults(certificates)
+  } else if (subjects.includes("tiengphap")) {
+    candidates = getFrenchCertificateResults(certificates)
+  } else if (subjects.includes("anh")) {
+    candidates = getEnglishCertificateResults(certificates)
+  } else {
+    return null
+  }
+
+  const allowed = candidates.filter((item) =>
+    isCertificateAllowedForMajor(item.certificateType, majorCode),
+  )
+
+  return pickBestCertificate(allowed)
 }

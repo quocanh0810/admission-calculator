@@ -22,27 +22,41 @@ type Candidate402 = {
 }
 
 function build402Candidates(input: CandidateInput): Candidate402[] {
-  return [
-    input.hsa != null && input.hsa >= 80
-      ? { branch: "HSA" as const, rawBase: input.hsa, maxScale: 150 as const }
-      : null,
+  const candidates: Candidate402[] = []
 
-    input.tsa != null && input.tsa >= 50
-      ? { branch: "TSA" as const, rawBase: input.tsa, maxScale: 100 as const }
-      : null,
+  if (typeof input.hsa === "number" && input.hsa >= 80) {
+    candidates.push({
+      branch: "HSA",
+      rawBase: input.hsa,
+      maxScale: 150,
+    })
+  }
 
-    input.sat != null && input.sat >= 1000
-      ? {
-          branch: "SAT" as const,
-          rawBase: input.sat,
-          maxScale: 1600 as const,
-        }
-      : null,
+  if (typeof input.tsa === "number" && input.tsa >= 50) {
+    candidates.push({
+      branch: "TSA",
+      rawBase: input.tsa,
+      maxScale: 100,
+    })
+  }
 
-    input.act != null && input.act >= 20
-      ? { branch: "ACT" as const, rawBase: input.act, maxScale: 36 as const }
-      : null,
-  ].filter(Boolean) as Candidate402[]
+  if (typeof input.sat === "number" && input.sat >= 1000) {
+    candidates.push({
+      branch: "SAT",
+      rawBase: input.sat,
+      maxScale: 1600,
+    })
+  }
+
+  if (typeof input.act === "number" && input.act >= 20) {
+    candidates.push({
+      branch: "ACT",
+      rawBase: input.act,
+      maxScale: 36,
+    })
+  }
+
+  return candidates
 }
 
 export function calculateMethod402(
@@ -87,12 +101,12 @@ export function calculateMethod402(
       encouragementScore: encouragement,
     })
 
-    const priorityAdjustedScaled =
-      (bonus30.priorityAdjusted * candidate.maxScale) / 30
+    const priorityAdjustedScaled = round2(
+      (bonus30.priorityAdjusted * candidate.maxScale) / 30,
+    )
 
-    const totalBonusScaled = scaleBonus30ToScaleN(
-      bonus30.totalBonus30,
-      candidate.maxScale,
+    const totalBonusScaled = round2(
+      scaleBonus30ToScaleN(bonus30.totalBonus30, candidate.maxScale),
     )
 
     const finalScore = round2(
@@ -126,8 +140,8 @@ export function calculateMethod402(
     scoreDisplay: best.finalScore,
     maxScale: best.maxScale,
     note: major
-      ? `Kết quả PTXT 402 được tính theo dữ liệu hợp lệ cho ngành ${major.code}.`
-      : undefined,
+      ? `Kết quả PTXT 402 được tính riêng theo từng nhánh hợp lệ cho ngành ${major.code}; hệ thống chọn nhánh có điểm cao nhất.`
+      : "Kết quả PTXT 402 được tính riêng theo từng nhánh hợp lệ; hệ thống chọn nhánh có điểm cao nhất.",
     priorityBase: best.priorityBase,
     priorityAdjusted: best.priorityAdjusted,
     awardScore: best.awardScore,

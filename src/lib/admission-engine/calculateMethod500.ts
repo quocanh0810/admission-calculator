@@ -8,6 +8,7 @@ import {
 import {
   getBestCertificateConversion,
   getBestCertificateConversionForMajor,
+  getBestCertificateConversionForCombination,
 } from "@/data/certificateRules"
 import { getAwardScoreForMajor } from "@/data/awardRules"
 import {
@@ -61,11 +62,9 @@ export function calculateMethod500(
     }
   }
 
-  const cert = major
+  const fallbackCert = major
     ? getBestCertificateConversionForMajor(input.certificates, major.code)
     : getBestCertificateConversion(input.certificates)
-
-  const encouragement = cert?.encouragementScore ?? 0
 
   const standardAllowed: CombinationCode[] = major
     ? getAllowedCombinationsForMajorMethod(
@@ -97,7 +96,7 @@ export function calculateMethod500(
       priorityBase: input.priorityScore,
       priorityAdjusted: 0,
       awardScore: award,
-      encouragementScore: encouragement,
+      encouragementScore: 0,
       totalBonus30: 0,
     }
 
@@ -105,6 +104,13 @@ export function calculateMethod500(
       const trial = getBestCombinationExamScore(input, [code], 0)
       if (!trial) continue
 
+      const certForCombination = getBestCertificateConversionForCombination({
+        certificates: input.certificates,
+        majorCode: major?.code ?? "",
+        subjects: trial.subjects,
+      })
+
+      const encouragement = certForCombination?.encouragementScore ?? 0
       const baseScore = trial.score
 
       const bonus = calculateTotalBonus30({
@@ -171,15 +177,30 @@ export function calculateMethod500(
       note: major
         ? `Chưa đủ dữ liệu điểm thi hoặc chưa có tổ hợp hợp lệ cho ngành ${major.code} ở PTXT 500.`
         : "Chưa đủ dữ liệu điểm thi THPT cho các tổ hợp xét PTXT 500.",
-      certificateUsed: cert ?? undefined,
+      certificateUsed: fallbackCert ?? undefined,
       priorityBase: input.priorityScore,
       priorityAdjusted: 0,
       awardScore: award,
-      encouragementScore: encouragement,
+      encouragementScore: 0,
       totalBonus30: 0,
       programTrackScores: [],
     }
   }
+
+  const bestCert =
+    bestTrack.bestCombination && major
+      ? getBestCertificateConversionForCombination({
+          certificates: input.certificates,
+          majorCode: major.code,
+          subjects: bestTrack.bestCombination.subjects,
+        }) ?? fallbackCert
+      : bestTrack.bestCombination
+        ? getBestCertificateConversionForCombination({
+            certificates: input.certificates,
+            majorCode: "",
+            subjects: bestTrack.bestCombination.subjects,
+          }) ?? fallbackCert
+        : fallbackCert
 
   return {
     method: "500",
@@ -188,14 +209,14 @@ export function calculateMethod500(
     scoreDisplay: bestTrack.scoreDisplay,
     maxScale: 30,
     note: major
-      ? `Kết quả PTXT 500 được tính theo giải HSG hợp lệ, chứng chỉ hợp lệ và tổ hợp được phép của ngành ${major.code}.`
+      ? `Kết quả PTXT 500 được tính theo giải HSG hợp lệ, chứng chỉ hợp lệ theo từng tổ hợp và tổ hợp được phép của ngành ${major.code}.`
       : "Cần nộp minh chứng giải HSG và chứng chỉ (nếu có) để trường kiểm tra.",
     bestCombination: bestTrack.bestCombination,
-    certificateUsed: cert ?? undefined,
+    certificateUsed: bestCert ?? undefined,
     priorityBase: bestTrack.priorityBase ?? input.priorityScore,
     priorityAdjusted: bestTrack.priorityAdjusted ?? 0,
     awardScore: bestTrack.awardScore ?? award,
-    encouragementScore: bestTrack.encouragementScore ?? encouragement,
+    encouragementScore: bestTrack.encouragementScore ?? 0,
     totalBonus30: bestTrack.totalBonus30 ?? 0,
     programTrackScores: allTrackScores,
   }

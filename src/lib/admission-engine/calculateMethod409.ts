@@ -9,6 +9,7 @@ import {
 import {
   getBestCertificateConversion,
   getBestCertificateConversionForMajor,
+  getBestCertificateConversionForCombination,
 } from "@/data/certificateRules"
 import { getAwardScoreForMajor } from "@/data/awardRules"
 import {
@@ -57,31 +58,31 @@ export function calculateMethod409(
   input: CandidateInput,
   major?: Major,
 ): MethodResult {
-  const cert = major
-    ? getBestCertificateConversionForMajor(input.certificates, major.code)
-    : getBestCertificateConversion(input.certificates)
 
-  if (!cert) {
-    return {
-      method: "409",
-      eligible: false,
-      scoreRaw: null,
-      scoreDisplay: null,
-      maxScale: 30,
-      note: major
-        ? `Chưa có chứng chỉ ngoại ngữ hợp lệ cho ngành ${major.code} để quy đổi PTXT 409.`
-        : "Chưa có chứng chỉ ngoại ngữ đủ điều kiện để quy đổi cho PTXT 409.",
-      priorityBase: input.priorityScore,
-      priorityAdjusted: 0,
-      awardScore: 0,
-      encouragementScore: 0,
-      totalBonus30: 0,
-      programTrackScores: [],
-    }
+  const fallbackCert = major
+  ? getBestCertificateConversionForMajor(input.certificates, major.code)
+  : getBestCertificateConversion(input.certificates)
+
+if (!fallbackCert) {
+  return {
+    method: "409",
+    eligible: false,
+    scoreRaw: null,
+    scoreDisplay: null,
+    maxScale: 30,
+    note: major
+      ? `Chưa có chứng chỉ ngoại ngữ hợp lệ cho ngành ${major.code} để quy đổi PTXT 409.`
+      : "Chưa có chứng chỉ ngoại ngữ đủ điều kiện để quy đổi cho PTXT 409.",
+    priorityBase: input.priorityScore,
+    priorityAdjusted: 0,
+    awardScore: 0,
+    encouragementScore: 0,
+    totalBonus30: 0,
+    programTrackScores: [],
   }
+}
 
-  const validCert = cert
-  const award = getAwardScoreForMajor(input.awards, major)
+const award = getAwardScoreForMajor(input.awards, major)
 
   const standardAllowed: CombinationCode[] = major
     ? getAllowedCombinationsForMajorMethod(
@@ -123,9 +124,17 @@ export function calculateMethod409(
 
       if (!subjects.includes("toan")) continue
 
+      const certForCombination = getBestCertificateConversionForCombination({
+        certificates: input.certificates,
+        majorCode: major?.code ?? "",
+        subjects,
+      })
+      
+      if (!certForCombination) continue
+      
       const languageSubject = resolveLanguageSubjectForCertificate(
         subjects,
-        validCert.certificateType,
+        certForCombination.certificateType,
       )
       if (!languageSubject) continue
 
@@ -139,7 +148,7 @@ export function calculateMethod409(
 
       if (typeof toan !== "number" || typeof other !== "number") continue
 
-      const baseWithoutBonus = toan + other + validCert.convertedScore
+      const baseWithoutBonus = toan + other + certForCombination.convertedScore
 
       const bonus = calculateTotalBonus30({
         priorityBase: input.priorityScore,
@@ -206,7 +215,14 @@ export function calculateMethod409(
       note: major
         ? `Chưa đủ dữ liệu điểm thi hoặc chưa có tổ hợp hợp lệ cho ngành ${major.code} ở PTXT 409.`
         : "Chưa đủ dữ liệu điểm thi THPT cho các tổ hợp xét PTXT 409.",
-      certificateUsed: validCert,
+        certificateUsed:
+        bestTrack?.bestCombination
+          ? getBestCertificateConversionForCombination({
+              certificates: input.certificates,
+              majorCode: major?.code ?? "",
+              subjects: bestTrack.bestCombination.subjects,
+            }) ?? fallbackCert
+          : fallbackCert,
       priorityBase: input.priorityScore,
       priorityAdjusted: 0,
       awardScore: 0,
@@ -226,7 +242,14 @@ export function calculateMethod409(
       ? `Kết quả PTXT 409 được tính theo chứng chỉ hợp lệ và tổ hợp được phép của ngành ${major.code}.`
       : "Cần nộp minh chứng chứng chỉ ngoại ngữ để trường kiểm tra và quy đổi chính thức.",
     bestCombination: bestTrack.bestCombination,
-    certificateUsed: validCert,
+    certificateUsed:
+        bestTrack?.bestCombination
+          ? getBestCertificateConversionForCombination({
+              certificates: input.certificates,
+              majorCode: major?.code ?? "",
+              subjects: bestTrack.bestCombination.subjects,
+            }) ?? fallbackCert
+          : fallbackCert,
     priorityBase: bestTrack.priorityBase ?? input.priorityScore,
     priorityAdjusted: bestTrack.priorityAdjusted ?? 0,
     awardScore: bestTrack.awardScore ?? 0,

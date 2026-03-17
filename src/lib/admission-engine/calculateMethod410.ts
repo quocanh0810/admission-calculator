@@ -10,6 +10,7 @@ import {
 import {
   getBestCertificateConversion,
   getBestCertificateConversionForMajor,
+  getBestCertificateConversionForCombination,
 } from "@/data/certificateRules"
 import { getAwardScoreForMajor } from "@/data/awardRules"
 import {
@@ -81,11 +82,11 @@ export function calculateMethod410(
   input: CandidateInput,
   major?: Major,
 ): MethodResult {
-  const cert = major
+  const fallbackCert = major
     ? getBestCertificateConversionForMajor(input.certificates, major.code)
     : getBestCertificateConversion(input.certificates)
 
-  if (!cert) {
+  if (!fallbackCert) {
     return {
       method: "410",
       eligible: false,
@@ -103,8 +104,6 @@ export function calculateMethod410(
       programTrackScores: [],
     }
   }
-
-  const validCert = cert
 
   const awardBase = getAwardScoreForMajor(input.awards, major)
   const bonusSpecialSchool = input.isSpecializedSchool ? 0.5 : 0
@@ -150,9 +149,17 @@ export function calculateMethod410(
 
       if (!subjects.includes("toan")) continue
 
+      const certForCombination = getBestCertificateConversionForCombination({
+        certificates: input.certificates,
+        majorCode: major?.code ?? "",
+        subjects,
+      })
+
+      if (!certForCombination) continue
+
       const languageSubject = resolveLanguageSubjectForCertificate(
         subjects,
-        validCert.certificateType,
+        certForCombination.certificateType,
       )
       if (!languageSubject) continue
 
@@ -168,7 +175,8 @@ export function calculateMethod410(
 
       if (toanAvg == null || otherAvg == null) continue
 
-      const baseWithoutBonus = toanAvg + otherAvg + validCert.convertedScore
+      const baseWithoutBonus =
+        toanAvg + otherAvg + certForCombination.convertedScore
 
       const bonus = calculateTotalBonus30({
         priorityBase: input.priorityScore,
@@ -235,7 +243,7 @@ export function calculateMethod410(
       note: major
         ? `Chưa đủ dữ liệu học bạ hoặc chưa có tổ hợp hợp lệ cho ngành ${major.code} ở PTXT 410.`
         : "Chưa đủ dữ liệu học bạ 3 năm cho các tổ hợp xét PTXT 410.",
-      certificateUsed: validCert,
+      certificateUsed: fallbackCert,
       priorityBase: input.priorityScore,
       priorityAdjusted: 0,
       awardScore: 0,
@@ -245,6 +253,21 @@ export function calculateMethod410(
     }
   }
 
+  const bestCert =
+    bestTrack.bestCombination && major
+      ? getBestCertificateConversionForCombination({
+          certificates: input.certificates,
+          majorCode: major.code,
+          subjects: bestTrack.bestCombination.subjects,
+        }) ?? fallbackCert
+      : bestTrack.bestCombination
+        ? getBestCertificateConversionForCombination({
+            certificates: input.certificates,
+            majorCode: "",
+            subjects: bestTrack.bestCombination.subjects,
+          }) ?? fallbackCert
+        : fallbackCert
+
   return {
     method: "410",
     eligible: true,
@@ -252,10 +275,10 @@ export function calculateMethod410(
     scoreDisplay: bestTrack.scoreDisplay,
     maxScale: 30,
     note: major
-      ? `Kết quả PTXT 410 được tính theo chứng chỉ hợp lệ và tổ hợp được phép của ngành ${major.code}.`
-      : undefined,
+      ? `Kết quả PTXT 410 được tính theo đúng chứng chỉ hợp lệ của từng tổ hợp và tổ hợp được phép của ngành ${major.code}.`
+      : "Kết quả PTXT 410 được tính theo đúng chứng chỉ hợp lệ của từng tổ hợp.",
     bestCombination: bestTrack.bestCombination,
-    certificateUsed: validCert,
+    certificateUsed: bestCert,
     priorityBase: bestTrack.priorityBase ?? input.priorityScore,
     priorityAdjusted: bestTrack.priorityAdjusted ?? 0,
     awardScore: bestTrack.awardScore ?? 0,

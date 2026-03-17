@@ -22,6 +22,19 @@ import {
 
 type TrackCalcResult = ProgramTrackScore
 
+function getFallbackCombinations(
+  track: "standard" | "special",
+  major?: Major,
+): CombinationCode[] {
+  if (major?.combinations?.length) {
+    return [...major.combinations]
+  }
+
+  return track === "standard"
+    ? [...STANDARD_PROGRAM_COMBINATIONS]
+    : [...SPECIAL_PROGRAM_COMBINATIONS]
+}
+
 export function calculateMethod100(
   input: CandidateInput,
   major?: Major,
@@ -32,23 +45,21 @@ export function calculateMethod100(
 
   const encouragement = cert?.encouragementScore ?? 0
 
-  const standardFallback: CombinationCode[] =
-    major?.combinations?.length
-      ? [...major.combinations]
-      : [...STANDARD_PROGRAM_COMBINATIONS]
-
-  const specialFallback: CombinationCode[] =
-    major?.combinations?.length
-      ? [...major.combinations]
-      : [...SPECIAL_PROGRAM_COMBINATIONS]
-
   const standardAllowed: CombinationCode[] = major
-    ? getAllowedCombinationsForMajorMethod(major.code, "100", standardFallback)
-    : [...STANDARD_PROGRAM_COMBINATIONS]
+    ? getAllowedCombinationsForMajorMethod(
+        major.code,
+        "100",
+        getFallbackCombinations("standard", major),
+      )
+    : getFallbackCombinations("standard")
 
   const specialAllowed: CombinationCode[] = major
-    ? getAllowedCombinationsForMajorMethod(major.code, "100", specialFallback)
-    : [...SPECIAL_PROGRAM_COMBINATIONS]
+    ? getAllowedCombinationsForMajorMethod(
+        major.code,
+        "100",
+        getFallbackCombinations("special", major),
+      )
+    : getFallbackCombinations("special")
 
   function buildTrackScore(
     track: "standard" | "special",
@@ -66,11 +77,30 @@ export function calculateMethod100(
       awardScore: 0,
       encouragementScore: encouragement,
       totalBonus30: 0,
+      combinationAudits: [],
     }
+
+    const audits: NonNullable<TrackCalcResult["combinationAudits"]> = []
 
     for (const code of allowedCombinations) {
       const trial = getBestCombinationExamScore(input, [code], 0)
-      if (!trial) continue
+
+      if (!trial) {
+        audits.push({
+          combination: code,
+          subjects: [],
+          isEligible: false,
+          reason: "Thiếu điểm để tính tổ hợp này.",
+          baseScoreBeforeBonus: null,
+          finalScore: null,
+          priorityBase: input.priorityScore,
+          priorityAdjusted: 0,
+          awardScore: 0,
+          encouragementScore: encouragement,
+          totalBonus30: 0,
+        })
+        continue
+      }
 
       const baseScore = trial.score
 
@@ -83,6 +113,19 @@ export function calculateMethod100(
       })
 
       const finalScore = round2(baseScore + bonus.totalBonus30)
+
+      audits.push({
+        combination: trial.combination,
+        subjects: trial.subjects,
+        isEligible: true,
+        baseScoreBeforeBonus: baseScore,
+        finalScore,
+        priorityBase: input.priorityScore,
+        priorityAdjusted: bonus.priorityAdjusted,
+        awardScore: bonus.awardScore,
+        encouragementScore: bonus.encouragementScore,
+        totalBonus30: bonus.totalBonus30,
+      })
 
       if (best.scoreDisplay == null || finalScore > best.scoreDisplay) {
         best = {
@@ -99,7 +142,15 @@ export function calculateMethod100(
           awardScore: bonus.awardScore,
           encouragementScore: bonus.encouragementScore,
           totalBonus30: bonus.totalBonus30,
+          combinationAudits: audits,
         }
+      }
+    }
+
+    if (best.scoreDisplay == null) {
+      return {
+        ...best,
+        combinationAudits: audits,
       }
     }
 
@@ -108,13 +159,17 @@ export function calculateMethod100(
 
   const standardTrack = buildTrackScore(
     "standard",
-    "Tổng điểm đạt được tối đa 30 điểm - Chương trình chuẩn",
+    major
+      ? `Tổng điểm đạt được tối đa 30 điểm - Chương trình chuẩn (${major.code})`
+      : "Tổng điểm đạt được tối đa 30 điểm - Chương trình chuẩn",
     standardAllowed,
   )
 
   const specialTrack = buildTrackScore(
     "special",
-    "Tổng điểm đạt được tối đa 30 điểm - IPOP / Song bằng / Tiên tiến",
+    major
+      ? `Tổng điểm đạt được tối đa 30 điểm - IPOP / Song bằng / Tiên tiến (${major.code})`
+      : "Tổng điểm đạt được tối đa 30 điểm - IPOP / Song bằng / Tiên tiến",
     specialAllowed,
   )
 
@@ -124,19 +179,46 @@ export function calculateMethod100(
     .filter((item) => item.scoreDisplay != null)
     .sort((a, b) => (b.scoreDisplay ?? 0) - (a.scoreDisplay ?? 0))[0]
 
+  const eligible = allTrackScores.some(
+    (item) => typeof item.scoreDisplay === "number",
+  )
+
+  if (!eligible || !bestTrack) {
+    return {
+      method: "100",
+      eligible: false,
+      scoreRaw: null,
+      scoreDisplay: null,
+      maxScale: 30,
+      note: major
+        ? `Chưa đủ dữ liệu điểm thi hoặc chưa có tổ hợp hợp lệ cho ngành ${major.code} ở PTXT 100.`
+        : "Chưa đủ dữ liệu điểm thi THPT cho các tổ hợp xét PTXT 100.",
+      certificateUsed: cert ?? undefined,
+      priorityBase: input.priorityScore,
+      priorityAdjusted: 0,
+      awardScore: 0,
+      encouragementScore: encouragement,
+      totalBonus30: 0,
+      programTrackScores: allTrackScores,
+    }
+  }
+
   return {
     method: "100",
-    eligible: allTrackScores.some((item) => item.scoreDisplay != null),
-    scoreRaw: bestTrack?.scoreDisplay ?? null,
-    scoreDisplay: bestTrack?.scoreDisplay ?? null,
+    eligible: true,
+    scoreRaw: bestTrack.scoreDisplay,
+    scoreDisplay: bestTrack.scoreDisplay,
     maxScale: 30,
-    bestCombination: bestTrack?.bestCombination,
+    note: major
+      ? `Kết quả PTXT 100 được tính theo các tổ hợp được phép của ngành ${major.code}; điểm khuyến khích chứng chỉ chỉ dùng nếu chứng chỉ hợp lệ với ngành.`
+      : undefined,
+    bestCombination: bestTrack.bestCombination,
     certificateUsed: cert ?? undefined,
-    priorityBase: bestTrack?.priorityBase ?? input.priorityScore,
-    priorityAdjusted: bestTrack?.priorityAdjusted ?? 0,
-    awardScore: bestTrack?.awardScore ?? 0,
-    encouragementScore: bestTrack?.encouragementScore ?? 0,
-    totalBonus30: bestTrack?.totalBonus30 ?? 0,
+    priorityBase: bestTrack.priorityBase ?? input.priorityScore,
+    priorityAdjusted: bestTrack.priorityAdjusted ?? 0,
+    awardScore: bestTrack.awardScore ?? 0,
+    encouragementScore: bestTrack.encouragementScore ?? 0,
+    totalBonus30: bestTrack.totalBonus30 ?? 0,
     programTrackScores: allTrackScores,
   }
 }
