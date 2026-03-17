@@ -1,12 +1,22 @@
 import {
   CandidateInput,
-  MethodResult,
-  Major,
-  TranscriptSubject,
   CombinationCode,
+  Major,
+  MethodResult,
+  ProgramTrackScore,
+  Subject,
+  TranscriptSubject,
 } from "@/types/admission"
-import { getBestCertificateConversion } from "@/data/certificateRules"
-import { getAwardScore } from "@/data/awardRules"
+import {
+  getBestCertificateConversion,
+  getBestCertificateConversionForMajor,
+} from "@/data/certificateRules"
+import { getAwardScoreForMajor } from "@/data/awardRules"
+import {
+  STANDARD_PROGRAM_COMBINATIONS,
+  SPECIAL_PROGRAM_COMBINATIONS,
+} from "@/data/scoreBuckets"
+import { getAllowedCombinationsForMajorMethod } from "@/data/admissionRules"
 import {
   calculateTotalBonus30,
   getTranscriptAverage,
@@ -14,11 +24,66 @@ import {
 } from "./helpers"
 import { combinations } from "@/data/combinations"
 
+type TrackCalcResult = ProgramTrackScore
+
+function resolveLanguageSubjectForCertificate(
+  subjects: Subject[],
+  certificateType?: string,
+): Subject | null {
+  if (!certificateType) return null
+
+  if (certificateType === "HSK") {
+    if (subjects.includes("tiengtrung")) return "tiengtrung"
+    if (subjects.includes("anh")) return "anh"
+    return null
+  }
+
+  if (certificateType === "TCF" || certificateType === "DELF") {
+    return subjects.includes("tiengphap") ? "tiengphap" : null
+  }
+
+  return subjects.includes("anh") ? "anh" : null
+}
+
+function isTranscriptCompatibleSubject(
+  subject: Subject,
+): subject is TranscriptSubject {
+  return (
+    subject === "toan" ||
+    subject === "van" ||
+    subject === "anh" ||
+    subject === "ly" ||
+    subject === "hoa" ||
+    subject === "sinh" ||
+    subject === "su" ||
+    subject === "dia" ||
+    subject === "gdktpl" ||
+    subject === "tinhoc" ||
+    subject === "congnghecongnghiep" ||
+    subject === "congnghenongnghiep"
+  )
+}
+
+function getFallbackCombinations(
+  track: "standard" | "special",
+  major?: Major,
+): CombinationCode[] {
+  if (major?.combinations?.length) {
+    return [...major.combinations]
+  }
+
+  return track === "standard"
+    ? [...STANDARD_PROGRAM_COMBINATIONS]
+    : [...SPECIAL_PROGRAM_COMBINATIONS]
+}
+
 export function calculateMethod410(
   input: CandidateInput,
-  availableMajors: Major[],
+  major?: Major,
 ): MethodResult {
-  const cert = getBestCertificateConversion(input.certificates)
+  const cert = major
+    ? getBestCertificateConversionForMajor(input.certificates, major.code)
+    : getBestCertificateConversion(input.certificates)
 
   if (!cert) {
     return {
@@ -27,103 +92,175 @@ export function calculateMethod410(
       scoreRaw: null,
       scoreDisplay: null,
       maxScale: 30,
-      note: "Chưa có chứng chỉ ngoại ngữ đủ điều kiện để quy đổi cho PTXT 410.",
+      note: major
+        ? `Chưa có chứng chỉ ngoại ngữ hợp lệ cho ngành ${major.code} để quy đổi PTXT 410.`
+        : "Chưa có chứng chỉ ngoại ngữ đủ điều kiện để quy đổi cho PTXT 410.",
+      priorityBase: input.priorityScore,
+      priorityAdjusted: 0,
+      awardScore: 0,
+      encouragementScore: 0,
+      totalBonus30: 0,
+      programTrackScores: [],
+    }
+  }
+
+  const validCert = cert
+
+  const awardBase = getAwardScoreForMajor(input.awards, major)
+  const bonusSpecialSchool = input.isSpecializedSchool ? 0.5 : 0
+  const award = Math.min(awardBase + bonusSpecialSchool, 1.5)
+
+  const standardAllowed: CombinationCode[] = major
+    ? getAllowedCombinationsForMajorMethod(
+        major.code,
+        "410",
+        getFallbackCombinations("standard", major),
+      )
+    : getFallbackCombinations("standard")
+
+  const specialAllowed: CombinationCode[] = major
+    ? getAllowedCombinationsForMajorMethod(
+        major.code,
+        "410",
+        getFallbackCombinations("special", major),
+      )
+    : getFallbackCombinations("special")
+
+  function buildTrackScore(
+    track: "standard" | "special",
+    trackLabel: string,
+    allowedCombinations: readonly CombinationCode[],
+  ): TrackCalcResult {
+    let best: TrackCalcResult = {
+      track,
+      trackLabel,
+      scoreDisplay: null,
+      baseScoreBeforeBonus: null,
+      bestCombination: undefined,
       priorityBase: input.priorityScore,
       priorityAdjusted: 0,
       awardScore: 0,
       encouragementScore: 0,
       totalBonus30: 0,
     }
-  }
 
-  const combinationsFromMajors = [
-    ...new Set(availableMajors.flatMap((m) => m.combinations)),
-  ] as CombinationCode[]
+    for (const code of allowedCombinations) {
+      const subjects = combinations[code]
+      if (!subjects) continue
 
-  const allCombinations: CombinationCode[] =
-    combinationsFromMajors.length > 0
-      ? combinationsFromMajors
-      : ["A01", "D01", "D07", "D09", "D10", "X25", "X26", "X27", "X28"]
+      if (!subjects.includes("toan")) continue
 
-  const awardBase = getAwardScore(input.awards)
-  const bonusSpecialSchool = input.isSpecializedSchool ? 0.5 : 0
-  const award = Math.min(awardBase + bonusSpecialSchool, 1.5)
-
-  let best: MethodResult["bestCombination"] | undefined
-  let bestBonus = {
-    priorityAdjusted: 0,
-    awardScore: 0,
-    encouragementScore: 0,
-    totalBonus30: 0,
-  }
-
-  for (const code of allCombinations) {
-    const subjects = combinations[code]
-    if (!subjects.includes("toan") || !subjects.includes("anh")) continue
-
-    const nonLanguage = subjects.find((s) => s !== "toan" && s !== "anh")
-    if (!nonLanguage) continue
-    if (nonLanguage === "tiengphap" || nonLanguage === "tiengtrung") continue
-
-    const toanAvg = getTranscriptAverage(input, "toan")
-    const otherAvg = getTranscriptAverage(
-      input,
-      nonLanguage as TranscriptSubject,
-    )
-
-    if (toanAvg == null || otherAvg == null) continue
-
-    const baseWithoutBonus = toanAvg + otherAvg + cert.convertedScore
-
-    const bonus = calculateTotalBonus30({
-      priorityBase: input.priorityScore,
-      totalScoreBeforePriority: baseWithoutBonus,
-      maxScaleForPriorityRule: 30,
-      awardScore: award,
-      encouragementScore: 0,
-    })
-
-    const finalScore = round2(baseWithoutBonus + bonus.totalBonus30)
-
-    if (!best || finalScore > best.score) {
-      best = {
-        combination: code,
+      const languageSubject = resolveLanguageSubjectForCertificate(
         subjects,
-        score: finalScore,
+        validCert.certificateType,
+      )
+      if (!languageSubject) continue
+
+      const nonLanguage = subjects.find(
+        (subject) => subject !== "toan" && subject !== languageSubject,
+      )
+      if (!nonLanguage) continue
+
+      if (!isTranscriptCompatibleSubject(nonLanguage)) continue
+
+      const toanAvg = getTranscriptAverage(input, "toan")
+      const otherAvg = getTranscriptAverage(input, nonLanguage)
+
+      if (toanAvg == null || otherAvg == null) continue
+
+      const baseWithoutBonus = toanAvg + otherAvg + validCert.convertedScore
+
+      const bonus = calculateTotalBonus30({
+        priorityBase: input.priorityScore,
+        totalScoreBeforePriority: baseWithoutBonus,
+        maxScaleForPriorityRule: 30,
+        awardScore: award,
+        encouragementScore: 0,
+      })
+
+      const finalScore = round2(baseWithoutBonus + bonus.totalBonus30)
+
+      if (best.scoreDisplay == null || finalScore > best.scoreDisplay) {
+        best = {
+          track,
+          trackLabel,
+          scoreDisplay: finalScore,
+          baseScoreBeforeBonus: baseWithoutBonus,
+          bestCombination: {
+            combination: code,
+            subjects,
+            score: finalScore,
+          },
+          priorityBase: input.priorityScore,
+          priorityAdjusted: bonus.priorityAdjusted,
+          awardScore: bonus.awardScore,
+          encouragementScore: bonus.encouragementScore,
+          totalBonus30: bonus.totalBonus30,
+        }
       }
-      bestBonus = bonus
     }
+
+    return best
   }
 
-  if (!best) {
+  const standardTrack = buildTrackScore(
+    "standard",
+    major
+      ? `Tổng điểm đạt được tối đa 30 điểm - Chương trình chuẩn (${major.code})`
+      : "Tổng điểm đạt được tối đa 30 điểm - Chương trình chuẩn",
+    standardAllowed,
+  )
+
+  const specialTrack = buildTrackScore(
+    "special",
+    major
+      ? `Tổng điểm đạt được tối đa 30 điểm - IPOP / Song bằng / Tiên tiến (${major.code})`
+      : "Tổng điểm đạt được tối đa 30 điểm - IPOP / Song bằng / Tiên tiến",
+    specialAllowed,
+  )
+
+  const allTrackScores: TrackCalcResult[] = [standardTrack, specialTrack]
+
+  const bestTrack = allTrackScores
+    .filter((item) => item.scoreDisplay != null)
+    .sort((a, b) => (b.scoreDisplay ?? 0) - (a.scoreDisplay ?? 0))[0]
+
+  if (!bestTrack || bestTrack.scoreDisplay == null) {
     return {
       method: "410",
       eligible: false,
       scoreRaw: null,
       scoreDisplay: null,
       maxScale: 30,
-      note: "Chưa đủ dữ liệu học bạ 3 năm cho các tổ hợp xét PTXT 410",
-      certificateUsed: cert,
+      note: major
+        ? `Chưa đủ dữ liệu học bạ hoặc chưa có tổ hợp hợp lệ cho ngành ${major.code} ở PTXT 410.`
+        : "Chưa đủ dữ liệu học bạ 3 năm cho các tổ hợp xét PTXT 410.",
+      certificateUsed: validCert,
       priorityBase: input.priorityScore,
       priorityAdjusted: 0,
       awardScore: 0,
       encouragementScore: 0,
       totalBonus30: 0,
+      programTrackScores: [],
     }
   }
 
   return {
     method: "410",
     eligible: true,
-    scoreRaw: best.score,
-    scoreDisplay: best.score,
+    scoreRaw: bestTrack.scoreDisplay,
+    scoreDisplay: bestTrack.scoreDisplay,
     maxScale: 30,
-    bestCombination: best,
-    certificateUsed: cert,
-    priorityBase: input.priorityScore,
-    priorityAdjusted: bestBonus.priorityAdjusted,
-    awardScore: bestBonus.awardScore,
-    encouragementScore: bestBonus.encouragementScore,
-    totalBonus30: bestBonus.totalBonus30,
+    note: major
+      ? `Kết quả PTXT 410 được tính theo chứng chỉ hợp lệ và tổ hợp được phép của ngành ${major.code}.`
+      : undefined,
+    bestCombination: bestTrack.bestCombination,
+    certificateUsed: validCert,
+    priorityBase: bestTrack.priorityBase ?? input.priorityScore,
+    priorityAdjusted: bestTrack.priorityAdjusted ?? 0,
+    awardScore: bestTrack.awardScore ?? 0,
+    encouragementScore: bestTrack.encouragementScore ?? 0,
+    totalBonus30: bestTrack.totalBonus30 ?? 0,
+    programTrackScores: allTrackScores,
   }
 }

@@ -1,4 +1,5 @@
-import { CertificateConversionResult, Toeic4Skills } from "@/types/admission"
+import { CandidateInput, CertificateConversionResult, Toeic4Skills } from "@/types/admission"
+import { isCertificateAllowedForMajor } from "@/data/admissionRules"
 
 export function convertIelts(
   value?: number,
@@ -274,7 +275,7 @@ export function convertHsk(
 ): CertificateConversionResult | null {
   if (level == null) return null
 
-  if (level === 6 && (score ?? 0) >= 180) {
+  if (level === 6) {
     return {
       certificateType: "HSK",
       rawValue: `Cấp độ 6${score != null ? ` (${score})` : ""}`,
@@ -283,7 +284,7 @@ export function convertHsk(
     }
   }
 
-  if (level === 5 && (score ?? 0) >= 180) {
+  if (level === 5) {
     return {
       certificateType: "HSK",
       rawValue: `Cấp độ 5${score != null ? ` (${score})` : ""}`,
@@ -295,7 +296,7 @@ export function convertHsk(
   if (level === 4) {
     return {
       certificateType: "HSK",
-      rawValue: "Cấp độ 4",
+      rawValue: `Cấp độ 4${score != null ? ` (${score})` : ""}`,
       convertedScore: 9,
       encouragementScore: 1.0,
     }
@@ -304,7 +305,7 @@ export function convertHsk(
   if (level === 3) {
     return {
       certificateType: "HSK",
-      rawValue: "Cấp độ 3",
+      rawValue: `Cấp độ 3${score != null ? ` (${score})` : ""}`,
       convertedScore: 8,
       encouragementScore: 0.5,
     }
@@ -429,6 +430,40 @@ export function getBestCertificateConversion(certificates?: {
     convertTcf(certificates.tcf),
     convertDelf(certificates.delf),
   ].filter(Boolean) as CertificateConversionResult[]
+
+  if (!results.length) return null
+
+  return results.sort((a, b) => {
+    if (b.convertedScore !== a.convertedScore) {
+      return b.convertedScore - a.convertedScore
+    }
+    return b.encouragementScore - a.encouragementScore
+  })[0]
+}
+
+export function getBestCertificateConversionForMajor(
+  certificates: CandidateInput["certificates"],
+  majorCode: string,
+): CertificateConversionResult | null {
+  if (!certificates) return null
+
+  const results = [
+    convertIelts(certificates.ielts),
+    convertToeflIbt(certificates.toeflIbt),
+    convertVstep(certificates.vstep),
+    convertAptis(certificates.aptis),
+    convertToeic4Skills(certificates.toeic4Skills),
+    convertHsk(certificates.hskLevel),
+    convertTcf(certificates.tcf),
+    convertDelf(certificates.delf),
+  ]
+    .filter(Boolean)
+    .filter((item) =>
+      isCertificateAllowedForMajor(
+        (item as CertificateConversionResult).certificateType,
+        majorCode,
+      ),
+    ) as CertificateConversionResult[]
 
   if (!results.length) return null
 

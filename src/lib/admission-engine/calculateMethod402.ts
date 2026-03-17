@@ -1,39 +1,62 @@
 import {
   CandidateInput,
+  Major,
   Method402BranchResult,
   MethodResult,
 } from "@/types/admission"
-import { getBestCertificateConversion } from "@/data/certificateRules"
-import { getAwardScore } from "@/data/awardRules"
+import {
+  getBestCertificateConversion,
+  getBestCertificateConversionForMajor,
+} from "@/data/certificateRules"
+import { getAwardScoreForMajor } from "@/data/awardRules"
 import {
   calculateTotalBonus30,
   round2,
   scaleBonus30ToScaleN,
 } from "./helpers"
 
-export function calculateMethod402(input: CandidateInput): MethodResult {
-  const cert = getBestCertificateConversion(input.certificates)
-  const encouragement = cert?.encouragementScore ?? 0
-  const award = getAwardScore(input.awards)
+type Candidate402 = {
+  branch: "HSA" | "TSA" | "SAT" | "ACT"
+  rawBase: number
+  maxScale: 150 | 100 | 1600 | 36
+}
 
-  const candidates = [
+function build402Candidates(input: CandidateInput): Candidate402[] {
+  return [
     input.hsa != null && input.hsa >= 80
       ? { branch: "HSA" as const, rawBase: input.hsa, maxScale: 150 as const }
       : null,
+
     input.tsa != null && input.tsa >= 50
       ? { branch: "TSA" as const, rawBase: input.tsa, maxScale: 100 as const }
       : null,
+
     input.sat != null && input.sat >= 1000
-      ? { branch: "SAT" as const, rawBase: input.sat, maxScale: 1600 as const }
+      ? {
+          branch: "SAT" as const,
+          rawBase: input.sat,
+          maxScale: 1600 as const,
+        }
       : null,
+
     input.act != null && input.act >= 20
       ? { branch: "ACT" as const, rawBase: input.act, maxScale: 36 as const }
       : null,
-  ].filter(Boolean) as {
-    branch: "HSA" | "TSA" | "SAT" | "ACT"
-    rawBase: number
-    maxScale: 150 | 100 | 1600 | 36
-  }[]
+  ].filter(Boolean) as Candidate402[]
+}
+
+export function calculateMethod402(
+  input: CandidateInput,
+  major?: Major,
+): MethodResult {
+  const cert = major
+    ? getBestCertificateConversionForMajor(input.certificates, major.code)
+    : getBestCertificateConversion(input.certificates)
+
+  const encouragement = cert?.encouragementScore ?? 0
+  const award = getAwardScoreForMajor(input.awards, major)
+
+  const candidates = build402Candidates(input)
 
   if (!candidates.length) {
     return {
@@ -42,12 +65,15 @@ export function calculateMethod402(input: CandidateInput): MethodResult {
       scoreRaw: null,
       scoreDisplay: null,
       maxScale: 30,
-      note: "Không đủ ngưỡng HSA/TSA/SAT/ACT.",
+      note: major
+        ? `Không đủ ngưỡng HSA/TSA/SAT/ACT cho ngành ${major.code}.`
+        : "Không đủ ngưỡng HSA/TSA/SAT/ACT.",
       priorityBase: input.priorityScore,
       priorityAdjusted: 0,
       awardScore: 0,
       encouragementScore: 0,
       totalBonus30: 0,
+      certificateUsed: cert ?? undefined,
       branches402: [],
     }
   }
@@ -99,6 +125,9 @@ export function calculateMethod402(input: CandidateInput): MethodResult {
     scoreRaw: best.finalScore,
     scoreDisplay: best.finalScore,
     maxScale: best.maxScale,
+    note: major
+      ? `Kết quả PTXT 402 được tính theo dữ liệu hợp lệ cho ngành ${major.code}.`
+      : undefined,
     priorityBase: best.priorityBase,
     priorityAdjusted: best.priorityAdjusted,
     awardScore: best.awardScore,

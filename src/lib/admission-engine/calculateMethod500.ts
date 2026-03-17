@@ -1,15 +1,20 @@
 import {
   CandidateInput,
   CombinationCode,
+  Major,
   MethodResult,
   ProgramTrackScore,
 } from "@/types/admission"
-import { getBestCertificateConversion } from "@/data/certificateRules"
-import { getAwardScore } from "@/data/awardRules"
+import {
+  getBestCertificateConversion,
+  getBestCertificateConversionForMajor,
+} from "@/data/certificateRules"
+import { getAwardScoreForMajor } from "@/data/awardRules"
 import {
   STANDARD_PROGRAM_COMBINATIONS,
   SPECIAL_PROGRAM_COMBINATIONS,
 } from "@/data/scoreBuckets"
+import { getAllowedCombinationsForMajorMethod } from "@/data/admissionRules"
 import {
   calculateTotalBonus30,
   getBestCombinationExamScore,
@@ -18,10 +23,65 @@ import {
 
 type TrackCalcResult = ProgramTrackScore
 
-export function calculateMethod500(input: CandidateInput): MethodResult {
-  const cert = getBestCertificateConversion(input.certificates)
+function getFallbackCombinations(
+  track: "standard" | "special",
+  major?: Major,
+): CombinationCode[] {
+  if (major?.combinations?.length) {
+    return [...major.combinations]
+  }
+
+  return track === "standard"
+    ? [...STANDARD_PROGRAM_COMBINATIONS]
+    : [...SPECIAL_PROGRAM_COMBINATIONS]
+}
+
+export function calculateMethod500(
+  input: CandidateInput,
+  major?: Major,
+): MethodResult {
+  const award = getAwardScoreForMajor(input.awards, major)
+
+  if (award <= 0) {
+    return {
+      method: "500",
+      eligible: false,
+      scoreRaw: null,
+      scoreDisplay: null,
+      maxScale: 30,
+      note: major
+        ? `PTXT 500 của ngành ${major.code} yêu cầu có giải HSG cấp tỉnh/thành phố phù hợp với ngành/chương trình đào tạo này.`
+        : "PTXT 500 cần có giải HSG cấp tỉnh/thành phố phù hợp.",
+      priorityBase: input.priorityScore,
+      priorityAdjusted: 0,
+      awardScore: 0,
+      encouragementScore: 0,
+      totalBonus30: 0,
+      programTrackScores: [],
+    }
+  }
+
+  const cert = major
+    ? getBestCertificateConversionForMajor(input.certificates, major.code)
+    : getBestCertificateConversion(input.certificates)
+
   const encouragement = cert?.encouragementScore ?? 0
-  const award = getAwardScore(input.awards)
+
+  const standardAllowed: CombinationCode[] = major
+    ? getAllowedCombinationsForMajorMethod(
+        major.code,
+        "500",
+        getFallbackCombinations("standard", major),
+      )
+    : getFallbackCombinations("standard")
+
+  const specialAllowed: CombinationCode[] = major
+    ? getAllowedCombinationsForMajorMethod(
+        major.code,
+        "500",
+        getFallbackCombinations("special", major),
+      )
+    : getFallbackCombinations("special")
 
   function buildTrackScore(
     track: "standard" | "special",
@@ -36,7 +96,7 @@ export function calculateMethod500(input: CandidateInput): MethodResult {
       bestCombination: undefined,
       priorityBase: input.priorityScore,
       priorityAdjusted: 0,
-      awardScore: 0,
+      awardScore: award,
       encouragementScore: encouragement,
       totalBonus30: 0,
     }
@@ -81,14 +141,18 @@ export function calculateMethod500(input: CandidateInput): MethodResult {
 
   const standardTrack = buildTrackScore(
     "standard",
-    "Tổng điểm đạt được tối đa 30 điểm - Chương trình chuẩn",
-    STANDARD_PROGRAM_COMBINATIONS,
+    major
+      ? `Tổng điểm đạt được tối đa 30 điểm - Chương trình chuẩn (${major.code})`
+      : "Tổng điểm đạt được tối đa 30 điểm - Chương trình chuẩn",
+    standardAllowed,
   )
 
   const specialTrack = buildTrackScore(
     "special",
-    "Tổng điểm đạt được tối đa 30 điểm - IPOP / Song bằng / Tiên tiến",
-    SPECIAL_PROGRAM_COMBINATIONS,
+    major
+      ? `Tổng điểm đạt được tối đa 30 điểm - IPOP / Song bằng / Tiên tiến (${major.code})`
+      : "Tổng điểm đạt được tối đa 30 điểm - IPOP / Song bằng / Tiên tiến",
+    specialAllowed,
   )
 
   const allTrackScores: TrackCalcResult[] = [standardTrack, specialTrack]
@@ -97,25 +161,42 @@ export function calculateMethod500(input: CandidateInput): MethodResult {
     .filter((item) => item.scoreDisplay != null)
     .sort((a, b) => (b.scoreDisplay ?? 0) - (a.scoreDisplay ?? 0))[0]
 
-  const eligible =
-    award > 0 && allTrackScores.some((item) => item.scoreDisplay != null)
+  if (!bestTrack || bestTrack.scoreDisplay == null) {
+    return {
+      method: "500",
+      eligible: false,
+      scoreRaw: null,
+      scoreDisplay: null,
+      maxScale: 30,
+      note: major
+        ? `Chưa đủ dữ liệu điểm thi hoặc chưa có tổ hợp hợp lệ cho ngành ${major.code} ở PTXT 500.`
+        : "Chưa đủ dữ liệu điểm thi THPT cho các tổ hợp xét PTXT 500.",
+      certificateUsed: cert ?? undefined,
+      priorityBase: input.priorityScore,
+      priorityAdjusted: 0,
+      awardScore: award,
+      encouragementScore: encouragement,
+      totalBonus30: 0,
+      programTrackScores: [],
+    }
+  }
 
   return {
     method: "500",
-    eligible,
-    scoreRaw: eligible ? bestTrack?.scoreDisplay ?? null : null,
-    scoreDisplay: eligible ? bestTrack?.scoreDisplay ?? null : null,
+    eligible: true,
+    scoreRaw: bestTrack.scoreDisplay,
+    scoreDisplay: bestTrack.scoreDisplay,
     maxScale: 30,
-    note: eligible
-      ? "Cần nộp minh chứng giải HSG và chứng chỉ (nếu có) để trường kiểm tra."
-      : "PTXT 500 cần có giải HSG cấp tỉnh/thành phố phù hợp.",
-    bestCombination: bestTrack?.bestCombination,
+    note: major
+      ? `Kết quả PTXT 500 được tính theo giải HSG hợp lệ, chứng chỉ hợp lệ và tổ hợp được phép của ngành ${major.code}.`
+      : "Cần nộp minh chứng giải HSG và chứng chỉ (nếu có) để trường kiểm tra.",
+    bestCombination: bestTrack.bestCombination,
     certificateUsed: cert ?? undefined,
-    priorityBase: bestTrack?.priorityBase ?? input.priorityScore,
-    priorityAdjusted: bestTrack?.priorityAdjusted ?? 0,
-    awardScore: bestTrack?.awardScore ?? 0,
-    encouragementScore: bestTrack?.encouragementScore ?? 0,
-    totalBonus30: bestTrack?.totalBonus30 ?? 0,
+    priorityBase: bestTrack.priorityBase ?? input.priorityScore,
+    priorityAdjusted: bestTrack.priorityAdjusted ?? 0,
+    awardScore: bestTrack.awardScore ?? award,
+    encouragementScore: bestTrack.encouragementScore ?? encouragement,
+    totalBonus30: bestTrack.totalBonus30 ?? 0,
     programTrackScores: allTrackScores,
   }
 }

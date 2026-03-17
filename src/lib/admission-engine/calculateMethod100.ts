@@ -1,14 +1,19 @@
 import {
   CandidateInput,
   CombinationCode,
+  Major,
   MethodResult,
   ProgramTrackScore,
 } from "@/types/admission"
-import { getBestCertificateConversion } from "@/data/certificateRules"
+import {
+  getBestCertificateConversion,
+  getBestCertificateConversionForMajor,
+} from "@/data/certificateRules"
 import {
   STANDARD_PROGRAM_COMBINATIONS,
   SPECIAL_PROGRAM_COMBINATIONS,
 } from "@/data/scoreBuckets"
+import { getAllowedCombinationsForMajorMethod } from "@/data/admissionRules"
 import {
   calculateTotalBonus30,
   getBestCombinationExamScore,
@@ -17,9 +22,33 @@ import {
 
 type TrackCalcResult = ProgramTrackScore
 
-export function calculateMethod100(input: CandidateInput): MethodResult {
-  const cert = getBestCertificateConversion(input.certificates)
+export function calculateMethod100(
+  input: CandidateInput,
+  major?: Major,
+): MethodResult {
+  const cert = major
+    ? getBestCertificateConversionForMajor(input.certificates, major.code)
+    : getBestCertificateConversion(input.certificates)
+
   const encouragement = cert?.encouragementScore ?? 0
+
+  const standardFallback: CombinationCode[] =
+    major?.combinations?.length
+      ? [...major.combinations]
+      : [...STANDARD_PROGRAM_COMBINATIONS]
+
+  const specialFallback: CombinationCode[] =
+    major?.combinations?.length
+      ? [...major.combinations]
+      : [...SPECIAL_PROGRAM_COMBINATIONS]
+
+  const standardAllowed: CombinationCode[] = major
+    ? getAllowedCombinationsForMajorMethod(major.code, "100", standardFallback)
+    : [...STANDARD_PROGRAM_COMBINATIONS]
+
+  const specialAllowed: CombinationCode[] = major
+    ? getAllowedCombinationsForMajorMethod(major.code, "100", specialFallback)
+    : [...SPECIAL_PROGRAM_COMBINATIONS]
 
   function buildTrackScore(
     track: "standard" | "special",
@@ -80,13 +109,13 @@ export function calculateMethod100(input: CandidateInput): MethodResult {
   const standardTrack = buildTrackScore(
     "standard",
     "Tổng điểm đạt được tối đa 30 điểm - Chương trình chuẩn",
-    STANDARD_PROGRAM_COMBINATIONS,
+    standardAllowed,
   )
 
   const specialTrack = buildTrackScore(
     "special",
     "Tổng điểm đạt được tối đa 30 điểm - IPOP / Song bằng / Tiên tiến",
-    SPECIAL_PROGRAM_COMBINATIONS,
+    specialAllowed,
   )
 
   const allTrackScores: TrackCalcResult[] = [standardTrack, specialTrack]

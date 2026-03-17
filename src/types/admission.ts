@@ -42,7 +42,13 @@ export type CombinationCode =
   | "X27"
   | "X28"
 
-export type MethodCode = "100" | "301" | "402" | "409" | "410" | "500"
+export type MethodCode =
+  | "100"
+  | "301"
+  | "402"
+  | "409"
+  | "410"
+  | "500"
 
 export type CertificateType =
   | "IELTS"
@@ -55,6 +61,8 @@ export type CertificateType =
   | "DELF"
 
 export type HighSchoolAwardLevel = "nhat" | "nhi" | "ba"
+
+export type Method402Branch = "HSA" | "TSA" | "SAT" | "ACT"
 
 export interface AwardInput {
   subject: Subject
@@ -70,6 +78,15 @@ export interface Toeic4Skills {
   speakingWriting: number
 }
 
+export interface Major {
+  code: string
+  name: string
+  programType?: string
+  allowedMethods: MethodCode[]
+  combinations: CombinationCode[]
+  benchmark2025?: number
+}
+
 export interface CandidateInput {
   graduationYear: 2026
 
@@ -78,7 +95,10 @@ export interface CandidateInput {
   priorityObjectScore?: number
 
   isSpecializedSchool?: boolean
+  selectedMajors?: Major[]
+
   examScores: Partial<Record<Subject, number>>
+
   transcript10: TranscriptYearScores
   transcript11: TranscriptYearScores
   transcript12: TranscriptYearScores
@@ -95,21 +115,11 @@ export interface CandidateInput {
     aptis?: number
     toeic4Skills?: Toeic4Skills
     hskLevel?: 3 | 4 | 5 | 6
-    hskScore?: number
     tcf?: number
     delf?: "B1" | "B2" | "C1" | "C2"
   }
 
   awards?: AwardInput[]
-}
-
-export interface Major {
-  code: string
-  name: string
-  programType?: string
-  allowedMethods: MethodCode[]
-  combinations: CombinationCode[]
-  benchmark2025?: number
 }
 
 export interface CertificateConversionResult {
@@ -126,7 +136,7 @@ export interface CombinationScoreResult {
 }
 
 export interface Method402BranchResult {
-  branch: "HSA" | "TSA" | "SAT" | "ACT"
+  branch: Method402Branch
   maxScale: 150 | 100 | 1600 | 36
 
   rawBase: number
@@ -142,13 +152,23 @@ export interface Method402BranchResult {
   finalScore: number
 }
 
-export interface ProgramTrackScore {
-  track: "standard" | "special"
-  trackLabel: string
+/**
+ * Dùng để audit từng tổ hợp khi xuất Excel.
+ * Rất hữu ích để debug logic tính điểm.
+ */
+export interface CombinationAuditResult {
+  combination: CombinationCode
+  subjects: Subject[]
 
-  scoreDisplay: number | null
-  baseScoreBeforeBonus?: number | null
-  bestCombination?: CombinationScoreResult
+  isEligible: boolean
+  reason?: string
+
+  baseScoreBeforeBonus: number | null
+  finalScore: number | null
+
+  toanScore?: number | null
+  secondSubjectScore?: number | null
+  certificateConvertedScore?: number | null
 
   priorityBase?: number
   priorityAdjusted?: number
@@ -157,13 +177,41 @@ export interface ProgramTrackScore {
   totalBonus30?: number
 }
 
+/**
+ * Kết quả theo từng nhóm chương trình (standard / special)
+ * trong một phương thức.
+ */
+export interface ProgramTrackScore {
+  track: "standard" | "special"
+  trackLabel: string
+
+  scoreDisplay: number | null
+  baseScoreBeforeBonus?: number | null
+
+  bestCombination?: CombinationScoreResult
+
+  priorityBase?: number
+  priorityAdjusted?: number
+  awardScore?: number
+  encouragementScore?: number
+  totalBonus30?: number
+
+  combinationAudits?: CombinationAuditResult[]
+}
+
+/**
+ * Kết quả chung của một phương thức xét tuyển.
+ */
 export interface MethodResult {
   method: MethodCode
   eligible: boolean
+
   scoreRaw: number | null
   scoreDisplay: number | null
   maxScale: 30 | 36 | 100 | 150 | 1600
+
   note?: string
+
   bestCombination?: CombinationScoreResult
   certificateUsed?: CertificateConversionResult
 
@@ -173,9 +221,15 @@ export interface MethodResult {
   encouragementScore?: number
   totalBonus30?: number
 
+  /**
+   * PTXT 402
+   */
   branches402?: Method402BranchResult[]
-  bestBranch402?: "HSA" | "TSA" | "SAT" | "ACT"
+  bestBranch402?: Method402Branch
 
+  /**
+   * PTXT 100 / 409 / 410 / 500
+   */
   programTrackScores?: ProgramTrackScore[]
 }
 
@@ -197,11 +251,71 @@ export interface ScoreBucketResult {
   method410: MethodResult | null
 }
 
+/**
+ * Type riêng để lưu chi tiết từng phương thức theo từng ngành.
+ * Về bản chất gần tương đương MethodResult,
+ * nhưng tách riêng để dễ đọc và dễ export.
+ */
+export interface SelectedMajorMethodDetail {
+  method: MethodCode
+  eligible: boolean
+
+  scoreDisplay: number | null
+  scoreRaw: number | null
+  maxScale: 30 | 36 | 100 | 150 | 1600
+
+  bestCombination?: CombinationScoreResult
+  certificateUsed?: CertificateConversionResult
+
+  priorityBase?: number
+  priorityAdjusted?: number
+  awardScore?: number
+  encouragementScore?: number
+  totalBonus30?: number
+
+  note?: string
+
+  programTrackScores?: ProgramTrackScore[]
+
+  branches402?: Method402BranchResult[]
+  bestBranch402?: Method402Branch
+}
+
+export interface SelectedMajorResult {
+  code: string
+  name: string
+  programType?: string
+
+  bestCombination?: CombinationScoreResult
+  certificateUsed?: CertificateConversionResult
+
+  methodScores: Record<"100" | "409" | "410" | "500", number | null>
+  method402Scores: Record<Method402Branch, number | null>
+
+  bestMethodAmongMainMethods: "100" | "409" | "410" | "500" | null
+
+  /**
+   * Toàn bộ chi tiết từng PTXT cho ngành này,
+   * dùng để xuất Excel / debug.
+   */
+  methodDetails?: {
+    "100"?: SelectedMajorMethodDetail | null
+    "402"?: SelectedMajorMethodDetail | null
+    "409"?: SelectedMajorMethodDetail | null
+    "410"?: SelectedMajorMethodDetail | null
+    "500"?: SelectedMajorMethodDetail | null
+  }
+}
+
 export interface CalculationResponse {
   scoreBuckets: ScoreBucketResult[]
+
   method402: MethodResult | null
   manual301: MethodResult | null
+
   eligibleMajorResults: MajorMethodEvaluation[]
+  selectedMajorResults: SelectedMajorResult[]
+
   summary: {
     totalEligibleMethods: number
     recommendedMethod: MethodCode | null
