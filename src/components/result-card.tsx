@@ -28,9 +28,11 @@ function formatScore(value: number | null | undefined) {
 function ScoreCell({
   value,
   active = false,
+  hidden = false,
 }: {
   value: number | null | undefined
   active?: boolean
+  hidden?: boolean
 }) {
   return (
     <td
@@ -38,7 +40,7 @@ function ScoreCell({
         active ? "bg-emerald-50 text-emerald-700" : "text-slate-700"
       }`}
     >
-      {formatScore(value)}
+      {hidden ? "-" : formatScore(value)}
     </td>
   )
 }
@@ -135,87 +137,95 @@ function MajorResultsTable({
           </thead>
 
           <tbody className="bg-white">
-            {rows.map((row, index) => (
-              <tr
-                key={`${row.code}-${row.programType ?? "default"}-${index}`}
-                className="border-b border-slate-200 align-top"
-              >
-                <td className="px-4 py-4 text-center text-sm text-slate-700">
-                  {index + 1}
-                </td>
+            {rows.map((row, index) => {
+              const canUse410 = row.methodDetails?.["410"] != null
 
-                <td className="px-4 py-4">
-                  <p className="text-sm font-semibold text-slate-900">
-                    {row.code} - {row.name}
-                  </p>
-                  {row.programType ? (
-                    <p className="mt-1 text-sm text-slate-600">
-                      {row.programType}
+              return (
+                <tr
+                  key={`${row.code}-${row.programType ?? "default"}-${index}`}
+                  className="border-b border-slate-200 align-top"
+                >
+                  <td className="px-4 py-4 text-center text-sm text-slate-700">
+                    {index + 1}
+                  </td>
+
+                  <td className="px-4 py-4">
+                    <p className="text-sm font-semibold text-slate-900">
+                      {row.code} - {row.name}
                     </p>
-                  ) : null}
-                </td>
-
-                <td className="px-4 py-4">
-                  {row.bestCombination ? (
-                    <>
-                      <p className="text-sm font-semibold text-slate-900">
-                        {row.bestCombination.combination}
-                      </p>
+                    {row.programType ? (
                       <p className="mt-1 text-sm text-slate-600">
-                        {formatSubjectsVietnamese(row.bestCombination.subjects)}
+                        {row.programType}
                       </p>
-                    </>
-                  ) : (
-                    <span className="text-sm text-slate-400">-</span>
-                  )}
-                </td>
+                    ) : null}
+                  </td>
 
-                <td className="px-4 py-4">
-                  {row.certificateUsed ? (
-                    <>
-                      <p className="text-sm font-semibold text-slate-900">
-                        {row.certificateUsed.certificateType}
-                      </p>
-                      <p className="mt-1 text-sm text-slate-600">
-                        {String(row.certificateUsed.rawValue)}
-                      </p>
-                    </>
-                  ) : (
-                    <span className="text-sm text-slate-400">-</span>
-                  )}
-                </td>
+                  <td className="px-4 py-4">
+                    {row.bestCombination ? (
+                      <>
+                        <p className="text-sm font-semibold text-slate-900">
+                          {row.bestCombination.combination}
+                        </p>
+                        <p className="mt-1 text-sm text-slate-600">
+                          {formatSubjectsVietnamese(row.bestCombination.subjects)}
+                        </p>
+                      </>
+                    ) : (
+                      <span className="text-sm text-slate-400">-</span>
+                    )}
+                  </td>
 
-                <ScoreCell
-                  value={row.methodScores["100"]}
-                  active={row.bestMethodAmongMainMethods === "100"}
-                />
-                <ScoreCell
-                  value={row.methodScores["409"]}
-                  active={row.bestMethodAmongMainMethods === "409"}
-                />
-                <ScoreCell
-                  value={row.methodScores["410"]}
-                  active={row.bestMethodAmongMainMethods === "410"}
-                />
-                <ScoreCell
-                  value={row.methodScores["500"]}
-                  active={row.bestMethodAmongMainMethods === "500"}
-                />
+                  <td className="px-4 py-4">
+                    {row.certificateUsed ? (
+                      <>
+                        <p className="text-sm font-semibold text-slate-900">
+                          {row.certificateUsed.certificateType}
+                        </p>
+                        <p className="mt-1 text-sm text-slate-600">
+                          {String(row.certificateUsed.rawValue)}
+                        </p>
+                      </>
+                    ) : (
+                      <span className="text-sm text-slate-400">-</span>
+                    )}
+                  </td>
 
-                <td className="px-4 py-4 text-center text-sm text-slate-700">
-                  {formatScore(row.method402Scores.HSA)}
-                </td>
-                <td className="px-4 py-4 text-center text-sm text-slate-700">
-                  {formatScore(row.method402Scores.TSA)}
-                </td>
-                <td className="px-4 py-4 text-center text-sm text-slate-700">
-                  {formatScore(row.method402Scores.SAT)}
-                </td>
-                <td className="px-4 py-4 text-center text-sm text-slate-700">
-                  {formatScore(row.method402Scores.ACT)}
-                </td>
-              </tr>
-            ))}
+                  <ScoreCell
+                    value={row.methodScores["100"]}
+                    active={row.bestMethodAmongMainMethods === "100"}
+                  />
+
+                  <ScoreCell
+                    value={row.methodScores["409"]}
+                    active={row.bestMethodAmongMainMethods === "409"}
+                  />
+
+                  <ScoreCell
+                    value={row.methodScores["410"]}
+                    active={canUse410 && row.bestMethodAmongMainMethods === "410"}
+                    hidden={!canUse410}
+                  />
+
+                  <ScoreCell
+                    value={row.methodScores["500"]}
+                    active={row.bestMethodAmongMainMethods === "500"}
+                  />
+
+                  <td className="px-4 py-4 text-center text-sm text-slate-700">
+                    {formatScore(row.method402Scores.HSA)}
+                  </td>
+                  <td className="px-4 py-4 text-center text-sm text-slate-700">
+                    {formatScore(row.method402Scores.TSA)}
+                  </td>
+                  <td className="px-4 py-4 text-center text-sm text-slate-700">
+                    {formatScore(row.method402Scores.SAT)}
+                  </td>
+                  <td className="px-4 py-4 text-center text-sm text-slate-700">
+                    {formatScore(row.method402Scores.ACT)}
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
