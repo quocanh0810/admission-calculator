@@ -529,21 +529,181 @@ export default function ScoreForm() {
   return (
     <div className="space-y-8">
       <form onSubmit={handleSubmit} className="space-y-6">
+
+      {/* Chứng chỉ ngoại ngữ */}
         <SectionCard
-          title="1. Điểm thi THPT 2026"
-          description="Nhập các môn bạn có điểm thi. Những môn chưa có có thể để trống."
-        >
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {EXAM_SUBJECTS.map((subject) => (
+            title="1. Chứng chỉ ngoại ngữ"
+            description="Nhập các chứng chỉ ngoại ngữ theo đúng bảng quy đổi."
+          >
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <SelectField
+              label="IELTS Academic"
+              value={
+                payload.certificates?.ielts != null
+                  ? Number(payload.certificates.ielts).toFixed(1)
+                  : ""
+              }
+              onChange={(value) =>
+                setPayload((prev: any) => ({
+                  ...prev,
+                  certificates: {
+                    ...prev.certificates,
+                    ielts: value === "" ? undefined : Number(value),
+                  },
+                }))
+              }
+              options={[
+                { value: "5.0", label: "5.0" },
+                { value: "5.5", label: "5.5" },
+                { value: "6.0", label: "6.0" },
+                { value: "6.5", label: "6.5" },
+                { value: "7.0", label: "7.0" },
+              ]}
+            />
+
               <InputField
-                key={subject.key}
-                label={subject.label}
-                value={payload.examScores?.[subject.key]}
-                onChange={(value) => setExamScore(subject.key, value)}
-                max={10}
+                label="TOEFL iBT"
+                value={payload.certificates?.toeflIbt}
+                onChange={(value) => setCertificateField("toeflIbt", value)}
+                step="1"
+                max={120}
               />
-            ))}
-          </div>
+
+            <SelectField
+              label="VSTEP"
+              value={
+                payload.certificates?.vstep != null
+                  ? Number(payload.certificates.vstep).toFixed(1)
+                  : ""
+              }
+              onChange={(value) =>
+                setPayload((prev: any) => ({
+                  ...prev,
+                  certificates: {
+                    ...prev.certificates,
+                    vstep: value === "" ? undefined : Number(value),
+                  },
+                }))
+              }
+              options={Array.from({ length: 10 }, (_, i) => {
+                const val = 5.5 + i * 0.5
+                return {
+                  value: val.toFixed(1),
+                  label: val.toFixed(1),
+                }
+              })}
+            />
+
+              <InputField
+                label="APTIS ESOL"
+                value={payload.certificates?.aptis}
+                onChange={(value) => setCertificateField("aptis", value)}
+                step="1"
+                max={200}
+              />
+
+              <InputField
+                label="TCF"
+                value={payload.certificates?.tcf}
+                onChange={(value) => setCertificateField("tcf", value)}
+                step="1"
+                max={699}
+              />
+
+              <SelectField
+                label="DELF"
+                value={payload.certificates?.delf ?? ""}
+                onChange={(value) =>
+                  setPayload((prev: any) => ({
+                    ...prev,
+                    certificates: {
+                      ...prev.certificates,
+                      delf: value === "" ? undefined : value,
+                    },
+                  }))
+                }
+                options={[
+                  { value: "B1", label: "B1" },
+                  { value: "B2", label: "B2" },
+                  { value: "C1", label: "C1" },
+                  { value: "C2", label: "C2" },
+                ]}
+              />
+
+              <SelectField
+                label="HSK cấp độ"
+                value={
+                  payload.certificates?.hskLevel != null
+                    ? String(payload.certificates.hskLevel)
+                    : ""
+                }
+                onChange={(value) =>
+                  setPayload((prev: any) => ({
+                    ...prev,
+                    certificates: {
+                      ...prev.certificates,
+                      hskLevel: value === "" ? undefined : Number(value),
+                    },
+                  }))
+                }
+                options={[
+                  { value: "3", label: "Cấp độ 3" },
+                  { value: "4", label: "Cấp độ 4" },
+                  { value: "5", label: "Cấp độ 5" },
+                  { value: "6", label: "Cấp độ 6" },
+                ]}
+              />
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <h4 className="mb-3 text-sm font-semibold text-slate-800">
+                TOEIC 4 kỹ năng
+              </h4>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <InputField
+                  label="Nghe đọc (Listening + Reading)"
+                  value={payload.certificates?.toeic4Skills?.listeningReading}
+                  onChange={(value) =>
+                    setPayload((prev: any) => ({
+                      ...prev,
+                      certificates: {
+                        ...prev.certificates,
+                        toeic4Skills: {
+                          listeningReading:
+                            value === "" ? undefined : Number(value),
+                          speakingWriting:
+                            prev.certificates?.toeic4Skills?.speakingWriting,
+                        },
+                      },
+                    }))
+                  }
+                  step="1"
+                  max={990}
+                />
+
+                <InputField
+                  label="Nói viết (Speaking + Writing)"
+                  value={payload.certificates?.toeic4Skills?.speakingWriting}
+                  onChange={(value) =>
+                    setPayload((prev: any) => ({
+                      ...prev,
+                      certificates: {
+                        ...prev.certificates,
+                        toeic4Skills: {
+                          listeningReading:
+                            prev.certificates?.toeic4Skills?.listeningReading,
+                          speakingWriting:
+                            value === "" ? undefined : Number(value),
+                        },
+                      },
+                    }))
+                  }
+                  step="1"
+                  max={400}
+                />
+              </div>
+            </div>
         </SectionCard>
 
         <SectionCard title="2. Bài thi đánh giá riêng">
@@ -601,259 +761,7 @@ export default function ScoreForm() {
         </SectionCard>
 
         <SectionCard
-          title="3. Điểm học bạ 3 năm lớp 10, 11, 12"
-          description="Tính phương thức học bạ kết hợp chứng chỉ ngoại ngữ."
-        >
-          <div className="space-y-6">
-            {transcriptYears.map((year) => (
-              <div
-                key={year.key}
-                className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
-              >
-                <h3 className="mb-4 text-base font-semibold text-slate-800">
-                  {year.label}
-                </h3>
-
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                  {TRANSCRIPT_410_SUBJECTS.map((subject) => (
-                    <InputField
-                      key={`${year.key}-${subject.key}`}
-                      label={subject.label}
-                      value={payload[year.key]?.[subject.key]}
-                      onChange={(value) =>
-                        setTranscriptScore(year.key, subject.key, value)
-                      }
-                      max={10}
-                    />
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </SectionCard>
-
-        <SectionCard
-          title="4. Điểm ưu tiên"
-          description="Nhập riêng điểm ưu tiên khu vực và điểm ưu tiên đối tượng."
-        >
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <InputField
-              label="Điểm ưu tiên khu vực"
-              value={payload.priorityAreaScore ?? ""}
-              onChange={(value) =>
-                setPayload((prev: any) => ({
-                  ...prev,
-                  priorityAreaScore: value === "" ? undefined : Number(value),
-                }))
-              }
-              max={1}
-            />
-
-            <InputField
-              label="Điểm ưu tiên đối tượng"
-              value={payload.priorityObjectScore ?? ""}
-              onChange={(value) =>
-                setPayload((prev: any) => ({
-                  ...prev,
-                  priorityObjectScore: value === "" ? undefined : Number(value),
-                }))
-              }
-              max={2}
-            />
-          </div>
-
-          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-            <p className="text-sm text-slate-600">
-              Tổng điểm ưu tiên = điểm khu vực + điểm đối tượng
-            </p>
-            <p className="mt-1 text-lg font-semibold text-slate-900">
-              {(
-                (payload.priorityAreaScore ?? 0) +
-                (payload.priorityObjectScore ?? 0)
-              )
-                .toString()
-                .replace(".", ",")}
-            </p>
-          </div>
-        </SectionCard>
-
-        <SectionCard
-          title="5. Chứng chỉ ngoại ngữ"
-          description="Nhập các chứng chỉ ngoại ngữ theo đúng bảng quy đổi."
-        >
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <SelectField
-            label="IELTS Academic"
-            value={
-              payload.certificates?.ielts != null
-                ? Number(payload.certificates.ielts).toFixed(1)
-                : ""
-            }
-            onChange={(value) =>
-              setPayload((prev: any) => ({
-                ...prev,
-                certificates: {
-                  ...prev.certificates,
-                  ielts: value === "" ? undefined : Number(value),
-                },
-              }))
-            }
-            options={[
-              { value: "5.0", label: "5.0" },
-              { value: "5.5", label: "5.5" },
-              { value: "6.0", label: "6.0" },
-              { value: "6.5", label: "6.5" },
-              { value: "7.0", label: "7.0" },
-            ]}
-          />
-
-            <InputField
-              label="TOEFL iBT"
-              value={payload.certificates?.toeflIbt}
-              onChange={(value) => setCertificateField("toeflIbt", value)}
-              step="1"
-              max={120}
-            />
-
-            <SelectField
-              label="VSTEP"
-              value={
-                payload.certificates?.vstep != null
-                  ? Number(payload.certificates.vstep).toFixed(1)
-                  : ""
-              }
-              onChange={(value) =>
-                setPayload((prev: any) => ({
-                  ...prev,
-                  certificates: {
-                    ...prev.certificates,
-                    vstep: value === "" ? undefined : Number(value),
-                  },
-                }))
-              }
-              options={Array.from({ length: 10 }, (_, i) => {
-                const val = 5.5 + i * 0.5
-                return {
-                  value: val.toFixed(1),
-                  label: val.toFixed(1),
-                }
-              })}
-            />
-
-            <InputField
-              label="APTIS ESOL"
-              value={payload.certificates?.aptis}
-              onChange={(value) => setCertificateField("aptis", value)}
-              step="1"
-              max={200}
-            />
-
-            <InputField
-              label="TCF"
-              value={payload.certificates?.tcf}
-              onChange={(value) => setCertificateField("tcf", value)}
-              step="1"
-              max={699}
-            />
-
-            <SelectField
-              label="DELF"
-              value={payload.certificates?.delf ?? ""}
-              onChange={(value) =>
-                setPayload((prev: any) => ({
-                  ...prev,
-                  certificates: {
-                    ...prev.certificates,
-                    delf: value === "" ? undefined : value,
-                  },
-                }))
-              }
-              options={[
-                { value: "B1", label: "B1" },
-                { value: "B2", label: "B2" },
-                { value: "C1", label: "C1" },
-                { value: "C2", label: "C2" },
-              ]}
-            />
-
-            <SelectField
-              label="HSK cấp độ"
-              value={
-                payload.certificates?.hskLevel != null
-                  ? String(payload.certificates.hskLevel)
-                  : ""
-              }
-              onChange={(value) =>
-                setPayload((prev: any) => ({
-                  ...prev,
-                  certificates: {
-                    ...prev.certificates,
-                    hskLevel: value === "" ? undefined : Number(value),
-                  },
-                }))
-              }
-              options={[
-                { value: "3", label: "Cấp độ 3" },
-                { value: "4", label: "Cấp độ 4" },
-                { value: "5", label: "Cấp độ 5" },
-                { value: "6", label: "Cấp độ 6" },
-              ]}
-            />
-          </div>
-
-          <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <h4 className="mb-3 text-sm font-semibold text-slate-800">
-              TOEIC 4 kỹ năng
-            </h4>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <InputField
-                label="Nghe đọc (Listening + Reading)"
-                value={payload.certificates?.toeic4Skills?.listeningReading}
-                onChange={(value) =>
-                  setPayload((prev: any) => ({
-                    ...prev,
-                    certificates: {
-                      ...prev.certificates,
-                      toeic4Skills: {
-                        listeningReading:
-                          value === "" ? undefined : Number(value),
-                        speakingWriting:
-                          prev.certificates?.toeic4Skills?.speakingWriting,
-                      },
-                    },
-                  }))
-                }
-                step="1"
-                max={990}
-              />
-
-              <InputField
-                label="Nói viết (Speaking + Writing)"
-                value={payload.certificates?.toeic4Skills?.speakingWriting}
-                onChange={(value) =>
-                  setPayload((prev: any) => ({
-                    ...prev,
-                    certificates: {
-                      ...prev.certificates,
-                      toeic4Skills: {
-                        listeningReading:
-                          prev.certificates?.toeic4Skills?.listeningReading,
-                        speakingWriting:
-                          value === "" ? undefined : Number(value),
-                      },
-                    },
-                  }))
-                }
-                step="1"
-                max={400}
-              />
-            </div>
-          </div>
-        </SectionCard>
-
-        <SectionCard
-          title="6. Giải học sinh giỏi cấp tỉnh / thành phố"
+          title="3. Giải học sinh giỏi cấp tỉnh / thành phố"
           description="Nếu có giải, hãy bật mục này và chọn đúng môn đạt giải cùng mức giải."
         >
           <label className="mb-5 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
@@ -902,7 +810,96 @@ export default function ScoreForm() {
         </SectionCard>
 
         <SectionCard
-          title="7. Thông tin trường THPT"
+          title="4. Điểm ưu tiên"
+          description="Chọn riêng điểm ưu tiên khu vực và điểm ưu tiên đối tượng."
+        >
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <SelectField
+              label="Điểm ưu tiên khu vực"
+              value={String(payload.priorityAreaScore ?? 0)}
+              onChange={(value) =>
+                setPayload((prev: any) => ({
+                  ...prev,
+                  priorityAreaScore: Number(value),
+                }))
+              }
+              options={[
+                { value: "0", label: "Không ưu tiên khu vực (0 điểm)" },
+                { value: "0.25", label: "KV3 (0.25 điểm)" },
+                { value: "0.5", label: "KV2 (0.5 điểm)" },
+                { value: "0.75", label: "KV2-NT (0.75 điểm)" },
+                { value: "1", label: "KV1 (1.0 điểm)" },
+              ]}
+            />
+
+            <SelectField
+              label="Điểm ưu tiên đối tượng"
+              value={String(payload.priorityObjectScore ?? 0)}
+              onChange={(value) =>
+                setPayload((prev: any) => ({
+                  ...prev,
+                  priorityObjectScore: Number(value),
+                }))
+              }
+              options={[
+                { value: "0", label: "Không ưu tiên đối tượng (0 điểm)" },
+                { value: "1", label: "Ưu tiên đối tượng mức 1.0 điểm" },
+                { value: "2", label: "Ưu tiên đối tượng mức 2.0 điểm" },
+              ]}
+            />
+          </div>
+
+          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <p className="text-sm text-slate-600">
+              Tổng điểm ưu tiên = điểm khu vực + điểm đối tượng
+            </p>
+            <p className="mt-1 text-lg font-semibold text-slate-900">
+              {(
+                Number(payload.priorityAreaScore ?? 0) +
+                Number(payload.priorityObjectScore ?? 0)
+              )
+                .toFixed(2)
+                .replace(/\.00$/, "")
+                .replace(/(\.\d)0$/, "$1")
+                .replace(".", ",")}
+            </p>
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          title="5. Điểm học bạ 3 năm lớp 10, 11, 12"
+          description="Tính phương thức học bạ kết hợp chứng chỉ ngoại ngữ."
+        >
+          <div className="space-y-6">
+            {transcriptYears.map((year) => (
+              <div
+                key={year.key}
+                className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+              >
+                <h3 className="mb-4 text-base font-semibold text-slate-800">
+                  {year.label}
+                </h3>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {TRANSCRIPT_410_SUBJECTS.map((subject) => (
+                    <InputField
+                      key={`${year.key}-${subject.key}`}
+                      label={subject.label}
+                      value={payload[year.key]?.[subject.key]}
+                      onChange={(value) =>
+                        setTranscriptScore(year.key, subject.key, value)
+                      }
+                      max={10}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          title="6. Thông tin trường THPT"
           description="Nếu không học trường THPT chuyên/trọng điểm quốc gia vui lòng không chọn mục này"
         >
           <label className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
@@ -919,6 +916,23 @@ export default function ScoreForm() {
             />
             Tôi học trường THPT chuyên/trọng điểm quốc gia
           </label>
+        </SectionCard>
+
+        <SectionCard
+          title="7. Điểm thi THPT 2026"
+          description="Nhập các môn bạn có điểm thi. Những môn chưa có có thể để trống."
+        >
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {EXAM_SUBJECTS.map((subject) => (
+              <InputField
+                key={subject.key}
+                label={subject.label}
+                value={payload.examScores?.[subject.key]}
+                onChange={(value) => setExamScore(subject.key, value)}
+                max={10}
+              />
+            ))}
+          </div>
         </SectionCard>
 
         <SectionCard
