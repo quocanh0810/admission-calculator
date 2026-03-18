@@ -96,18 +96,6 @@ function styleAllBorders(worksheet: ExcelJS.Worksheet) {
   })
 }
 
-function fillBestMethodCell(cell: ExcelJS.Cell) {
-  cell.fill = {
-    type: "pattern",
-    pattern: "solid",
-    fgColor: { argb: "E2F0D9" },
-  }
-  cell.font = {
-    bold: true,
-    color: { argb: "1F6E43" },
-  }
-}
-
 function centerColumns(
   worksheet: ExcelJS.Worksheet,
   columnNumbers: number[],
@@ -146,7 +134,10 @@ function getBaseScoreBeforeBonus(method?: MethodResult | null): number | string 
   return bestTrack?.baseScoreBeforeBonus ?? ""
 }
 
-function get402Branch(method402: MethodResult | null | undefined, branch: Method402Branch) {
+function get402Branch(
+  method402: MethodResult | null | undefined,
+  branch: Method402Branch,
+) {
   return method402?.branches402?.find((item) => item.branch === branch) ?? null
 }
 
@@ -185,7 +176,7 @@ export async function buildAdmissionExcel(params: {
   styleHeaderRow(wsSummary.getRow(1))
 
   result.selectedMajorResults.forEach((row: SelectedMajorResult, index) => {
-    const excelRow = wsSummary.addRow([
+    wsSummary.addRow([
       index + 1,
       row.code,
       row.name,
@@ -205,12 +196,6 @@ export async function buildAdmissionExcel(params: {
       formatValue(row.method402Scores.ACT),
       formatValue(row.bestMethodAmongMainMethods),
     ])
-
-    const best = row.bestMethodAmongMainMethods
-    if (best === "100") fillBestMethodCell(excelRow.getCell(8))
-    if (best === "409") fillBestMethodCell(excelRow.getCell(9))
-    if (best === "410") fillBestMethodCell(excelRow.getCell(10))
-    if (best === "500") fillBestMethodCell(excelRow.getCell(11))
   })
 
   styleAllBorders(wsSummary)
@@ -359,7 +344,7 @@ export async function buildAdmissionExcel(params: {
     branches.forEach((branch) => {
       const isBest = method402.bestBranch402 === branch.branch
 
-      const excelRow = ws402.addRow([
+      ws402.addRow([
         row.code,
         row.name,
         formatValue(row.programType),
@@ -380,11 +365,6 @@ export async function buildAdmissionExcel(params: {
         formatValue(branch.finalScore),
         isBest ? "Nhánh tốt nhất của PTXT 402." : "",
       ])
-
-      if (isBest) {
-        fillBestMethodCell(excelRow.getCell(6))
-        fillBestMethodCell(excelRow.getCell(18))
-      }
     })
   })
 
