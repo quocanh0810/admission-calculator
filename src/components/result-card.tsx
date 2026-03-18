@@ -27,19 +27,13 @@ function formatScore(value: number | null | undefined) {
 
 function ScoreCell({
   value,
-  active = false,
   hidden = false,
 }: {
   value: number | null | undefined
-  active?: boolean
   hidden?: boolean
 }) {
   return (
-    <td
-      className={`px-4 py-4 text-center text-sm font-semibold ${
-        active ? "bg-emerald-50 text-emerald-700" : "text-slate-700"
-      }`}
-    >
+    <td className="px-4 py-4 text-center text-sm font-semibold text-slate-700">
       {hidden ? "-" : formatScore(value)}
     </td>
   )
@@ -190,26 +184,13 @@ function MajorResultsTable({
                     )}
                   </td>
 
-                  <ScoreCell
-                    value={row.methodScores["100"]}
-                    active={row.bestMethodAmongMainMethods === "100"}
-                  />
-
-                  <ScoreCell
-                    value={row.methodScores["409"]}
-                    active={row.bestMethodAmongMainMethods === "409"}
-                  />
-
+                  <ScoreCell value={row.methodScores["100"]} />
+                  <ScoreCell value={row.methodScores["409"]} />
                   <ScoreCell
                     value={row.methodScores["410"]}
-                    active={canUse410 && row.bestMethodAmongMainMethods === "410"}
                     hidden={!canUse410}
                   />
-
-                  <ScoreCell
-                    value={row.methodScores["500"]}
-                    active={row.bestMethodAmongMainMethods === "500"}
-                  />
+                  <ScoreCell value={row.methodScores["500"]} />
 
                   <td className="px-4 py-4 text-center text-sm text-slate-700">
                     {formatScore(row.method402Scores.HSA)}
