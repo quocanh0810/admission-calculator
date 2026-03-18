@@ -715,12 +715,26 @@ export default function ScoreForm() {
               max={120}
             />
 
-            <InputField
+            <SelectField
               label="VSTEP"
-              value={payload.certificates?.vstep}
-              onChange={(value) => setCertificateField("vstep", value)}
-              step="0.5"
-              max={10}
+              value={
+                payload.certificates?.vstep != null
+                  ? String(payload.certificates.vstep)
+                  : ""
+              }
+              onChange={(value) =>
+                setPayload((prev: any) => ({
+                  ...prev,
+                  certificates: {
+                    ...prev.certificates,
+                    vstep: value === "" ? undefined : Number(value),
+                  },
+                }))
+              }
+              options={Array.from({ length: 10 }, (_, i) => {
+                const val = 5.5 + i * 0.5
+                return { value: val.toString(), label: val.toString() }
+              })}
             />
 
             <InputField
@@ -886,7 +900,7 @@ export default function ScoreForm() {
 
         <SectionCard
           title="7. Thông tin trường THPT"
-          description="Nếu không học trường THPT chuyên / trọng điểm quốc gia vui lòng không chọn mục này"
+          description="Nếu không học trường THPT chuyên/trọng điểm quốc gia vui lòng không chọn mục này"
         >
           <label className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
             <input
@@ -900,7 +914,7 @@ export default function ScoreForm() {
               }
               className="h-4 w-4 rounded border-slate-300"
             />
-            Tôi học trường THPT chuyên / trọng điểm quốc gia
+            Tôi học trường THPT chuyên/trọng điểm quốc gia
           </label>
         </SectionCard>
 
