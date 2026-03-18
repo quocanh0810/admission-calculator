@@ -682,13 +682,30 @@ export default function ScoreForm() {
           description="Nhập các chứng chỉ ngoại ngữ theo đúng bảng quy đổi."
         >
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            <InputField
-              label="IELTS Academic"
-              value={payload.certificates?.ielts}
-              onChange={(value) => setCertificateField("ielts", value)}
-              step="0.5"
-              max={9}
-            />
+          <SelectField
+            label="IELTS Academic"
+            value={
+              payload.certificates?.ielts != null
+                ? String(payload.certificates.ielts)
+                : ""
+            }
+            onChange={(value) =>
+              setPayload((prev: any) => ({
+                ...prev,
+                certificates: {
+                  ...prev.certificates,
+                  ielts: value === "" ? undefined : Number(value),
+                },
+              }))
+            }
+            options={[
+              { value: "5.0", label: "5.0" },
+              { value: "5.5", label: "5.5" },
+              { value: "6.0", label: "6.0" },
+              { value: "6.5", label: "6.5" },
+              { value: "7.0", label: "7.0" },
+            ]}
+          />
 
             <InputField
               label="TOEFL iBT"
