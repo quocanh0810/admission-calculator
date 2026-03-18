@@ -686,7 +686,7 @@ export default function ScoreForm() {
             label="IELTS Academic"
             value={
               payload.certificates?.ielts != null
-                ? String(payload.certificates.ielts)
+                ? Number(payload.certificates.ielts).toFixed(1)
                 : ""
             }
             onChange={(value) =>
@@ -719,7 +719,7 @@ export default function ScoreForm() {
               label="VSTEP"
               value={
                 payload.certificates?.vstep != null
-                  ? String(payload.certificates.vstep)
+                  ? Number(payload.certificates.vstep).toFixed(1)
                   : ""
               }
               onChange={(value) =>
@@ -733,7 +733,10 @@ export default function ScoreForm() {
               }
               options={Array.from({ length: 10 }, (_, i) => {
                 const val = 5.5 + i * 0.5
-                return { value: val.toString(), label: val.toString() }
+                return {
+                  value: val.toFixed(1),
+                  label: val.toFixed(1),
+                }
               })}
             />
 
