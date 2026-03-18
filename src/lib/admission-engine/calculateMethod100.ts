@@ -8,6 +8,7 @@ import {
 import {
   getBestCertificateConversion,
   getBestCertificateConversionForMajor,
+  getBestCertificateConversionForCombination,
 } from "@/data/certificateRules"
 import {
   STANDARD_PROGRAM_COMBINATIONS,
@@ -39,11 +40,9 @@ export function calculateMethod100(
   input: CandidateInput,
   major?: Major,
 ): MethodResult {
-  const cert = major
+  const fallbackCert = major
     ? getBestCertificateConversionForMajor(input.certificates, major.code)
     : getBestCertificateConversion(input.certificates)
-
-  const encouragement = cert?.encouragementScore ?? 0
 
   const standardAllowed: CombinationCode[] = major
     ? getAllowedCombinationsForMajorMethod(
@@ -75,7 +74,7 @@ export function calculateMethod100(
       priorityBase: input.priorityScore,
       priorityAdjusted: 0,
       awardScore: 0,
-      encouragementScore: encouragement,
+      encouragementScore: 0,
       totalBonus30: 0,
       combinationAudits: [],
     }
@@ -96,12 +95,19 @@ export function calculateMethod100(
           priorityBase: input.priorityScore,
           priorityAdjusted: 0,
           awardScore: 0,
-          encouragementScore: encouragement,
+          encouragementScore: 0,
           totalBonus30: 0,
         })
         continue
       }
 
+      const certForCombination = getBestCertificateConversionForCombination({
+        certificates: input.certificates,
+        majorCode: major?.code ?? "",
+        subjects: trial.subjects,
+      })
+
+      const encouragement = certForCombination?.encouragementScore ?? 0
       const baseScore = trial.score
 
       const bonus = calculateTotalBonus30({
@@ -142,7 +148,7 @@ export function calculateMethod100(
           awardScore: bonus.awardScore,
           encouragementScore: bonus.encouragementScore,
           totalBonus30: bonus.totalBonus30,
-          combinationAudits: audits,
+          combinationAudits: [...audits],
         }
       }
     }
@@ -176,7 +182,7 @@ export function calculateMethod100(
   const allTrackScores: TrackCalcResult[] = [standardTrack, specialTrack]
 
   const bestTrack = allTrackScores
-    .filter((item) => item.scoreDisplay != null)
+    .filter((item) => typeof item.scoreDisplay === "number")
     .sort((a, b) => (b.scoreDisplay ?? 0) - (a.scoreDisplay ?? 0))[0]
 
   const eligible = allTrackScores.some(
@@ -193,15 +199,30 @@ export function calculateMethod100(
       note: major
         ? `Chưa đủ dữ liệu điểm thi hoặc chưa có tổ hợp hợp lệ cho ngành ${major.code} ở PTXT 100.`
         : "Chưa đủ dữ liệu điểm thi THPT cho các tổ hợp xét PTXT 100.",
-      certificateUsed: cert ?? undefined,
+      certificateUsed: fallbackCert ?? undefined,
       priorityBase: input.priorityScore,
       priorityAdjusted: 0,
       awardScore: 0,
-      encouragementScore: encouragement,
+      encouragementScore: 0,
       totalBonus30: 0,
       programTrackScores: allTrackScores,
     }
   }
+
+  const bestCert =
+    bestTrack.bestCombination && major
+      ? getBestCertificateConversionForCombination({
+          certificates: input.certificates,
+          majorCode: major.code,
+          subjects: bestTrack.bestCombination.subjects,
+        }) ?? fallbackCert
+      : bestTrack.bestCombination
+        ? getBestCertificateConversionForCombination({
+            certificates: input.certificates,
+            majorCode: "",
+            subjects: bestTrack.bestCombination.subjects,
+          }) ?? fallbackCert
+        : fallbackCert
 
   return {
     method: "100",
@@ -210,10 +231,10 @@ export function calculateMethod100(
     scoreDisplay: bestTrack.scoreDisplay,
     maxScale: 30,
     note: major
-      ? `Kết quả PTXT 100 được tính theo các tổ hợp được phép của ngành ${major.code}; điểm khuyến khích chứng chỉ chỉ dùng nếu chứng chỉ hợp lệ với ngành.`
-      : undefined,
+      ? `Kết quả PTXT 100 được tính theo các tổ hợp được phép của ngành ${major.code}; điểm khuyến khích chứng chỉ được xác định đúng theo từng tổ hợp.`
+      : "Kết quả PTXT 100 được tính theo các tổ hợp hợp lệ; điểm khuyến khích chứng chỉ được xác định đúng theo từng tổ hợp.",
     bestCombination: bestTrack.bestCombination,
-    certificateUsed: cert ?? undefined,
+    certificateUsed: bestCert ?? undefined,
     priorityBase: bestTrack.priorityBase ?? input.priorityScore,
     priorityAdjusted: bestTrack.priorityAdjusted ?? 0,
     awardScore: bestTrack.awardScore ?? 0,

@@ -543,9 +543,12 @@ export function getBestCertificateConversionForCombination(params: {
     return null
   }
 
-  const allowed = candidates.filter((item) =>
-    isCertificateAllowedForMajor(item.certificateType, majorCode),
-  )
+  const allowed =
+    majorCode
+      ? candidates.filter((item) =>
+          isCertificateAllowedForMajor(item.certificateType, majorCode),
+        )
+      : candidates
 
   return pickBestCertificate(allowed)
 }
